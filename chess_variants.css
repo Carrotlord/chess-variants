@@ -1,0 +1,60 @@
+td, th {
+    border: 1px black solid;
+    border-collapse: collapse;
+    height: 64px;
+    width: 64px;
+    text-align: center;
+    /* display: table-cell; */
+    vertical-align: middle;
+}
+
+.piece {
+    font-size:50px;
+}
+
+.move_to_tile {
+    background-color: #ff8c00;
+}
+
+.selected_tile {
+    background-color: #6a5acd;
+}
+
+.opponents_selected_tile {
+    background-color: maroon;
+}
+
+.game_over_tile {
+    background-color: #808080;
+}
+
+.blue_tile {
+    background-color: #b0c4de;
+}
+
+.white_tile {
+    background-color: white;
+}
+
+.opponent_moved_tile {
+    background-color: green;
+}
+
+#chatroom_holder {
+    vertical-align: top;
+    text-align: left;
+    font-family: Calibri,Consolas,monospace;
+    border: none;
+}
+
+#chatroom {
+    vertical-align: top;
+    text-align: left;
+    font-family: Calibri,Consolas,monospace;
+    border: none;
+}
+
+#chessboard {
+    border: 1px black solid;
+    border-collapse: collapse;
+}
