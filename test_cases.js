@@ -22,4 +22,5 @@ function testCoordConversions() {
         }
     }
     console.log(results);
+    console.log(numbers);
 }
