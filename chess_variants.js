@@ -37,7 +37,7 @@ function toAlgebraic(square) {
         // Concat string with number
         return "abcdefgh"[square[1]] + (BOARD_HEIGHT - square[0]);
     } else if (typeof(square) === "number") {
-        return "abcdefgh"[square % BOARD_WIDTH] + Math.floor(BOARD_HEIGHT - square/BOARD_WIDTH);
+        return "abcdefgh"[square % BOARD_WIDTH] + (BOARD_HEIGHT - Math.floor(square/BOARD_WIDTH));
     }
 }
 
@@ -49,7 +49,7 @@ function toCoords(square) {
         let vertical = BOARD_HEIGHT - parseInt(digit, 10);
         return [vertical, horizontal];
     } else if (typeof(square) === "number") {
-        return [Math.floor(BOARD_HEIGHT - square/BOARD_WIDTH), square % BOARD_WIDTH]
+        return [Math.floor(square/BOARD_WIDTH), square % BOARD_WIDTH]
     }
 }
 
