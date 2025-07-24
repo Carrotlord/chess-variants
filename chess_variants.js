@@ -29,6 +29,13 @@ const WHITE_BISHOP = WHITE | BISHOP;
 const WHITE_KNIGHT = WHITE | KNIGHT;
 const WHITE_PAWN = WHITE | PAWN;
 
+const PIECE_SYMBOLS = {
+    [BLACK_KING]: "&#x265a;", [BLACK_QUEEN]: "&#x265b;", [BLACK_ROOK]: "&#x265c;",
+    [BLACK_BISHOP]: "&#x265d;", [BLACK_KNIGHT]: "&#x265e;", [BLACK_PAWN]: "&#x265f;",
+    [WHITE_KING]: "&#x2654;", [WHITE_QUEEN]: "&#x2655;", [WHITE_ROOK]: "&#x2656;",
+    [WHITE_BISHOP]: "&#x2657;", [WHITE_KNIGHT]: "&#x2658;", [WHITE_PAWN]: "&#x2659;"
+};
+
 class Board {
     constructor(graphicalBoard) {
         this.graphicalBoard = graphicalBoard;
@@ -75,9 +82,14 @@ class Board {
     }
     
     render() {
-        for (let i = 0; i < 64; i++) {
-            let cell = document.getElementById("s" + i);
-            cell.className = this.getColorLayer(i);
+        for (let id = 0; id < 64; id++) {
+            let cell = document.getElementById("s" + id);
+            cell.className = this.getColorLayer(id) + " piece";
+            let [i, j] = toCoords(id);
+            let piece = this.grid[i][j];
+            if (piece !== EMPTY) {
+                cell.innerHTML = PIECE_SYMBOLS[piece];
+            }
         }
     }
 }
