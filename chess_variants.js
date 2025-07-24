@@ -2,6 +2,86 @@ const CHAR_CODE_a = "a".charCodeAt(0);
 const BOARD_HEIGHT = 8;
 const BOARD_WIDTH = 8;
 
+const COLOR = 0x3; // bitwise mask for piece color (or empty)
+const KIND = 0x1C;  // bitwise mask for piece kind
+
+const EMPTY = 0;
+const WHITE = 1;
+const BLACK = 2;
+const KING = 1 << 2;
+const QUEEN = 2 << 2;
+const ROOK = 3 << 2;
+const BISHOP = 4 << 2;
+const KNIGHT = 5 << 2;
+const PAWN = 6 << 2;
+
+const BLACK_KING = BLACK | KING;
+const BLACK_QUEEN = BLACK | QUEEN;
+const BLACK_ROOK = BLACK | ROOK;
+const BLACK_BISHOP = BLACK | BISHOP;
+const BLACK_KNIGHT = BLACK | KNIGHT;
+const BLACK_PAWN = BLACK | PAWN;
+
+const WHITE_KING = WHITE | KING;
+const WHITE_QUEEN = WHITE | QUEEN;
+const WHITE_ROOK = WHITE | ROOK;
+const WHITE_BISHOP = WHITE | BISHOP;
+const WHITE_KNIGHT = WHITE | KNIGHT;
+const WHITE_PAWN = WHITE | PAWN;
+
+class Board {
+    constructor(graphicalBoard) {
+        this.graphicalBoard = graphicalBoard;
+        this.grid = [
+            [BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING, BLACK_BISHOP, BLACK_KNIGHT, BLACK_ROOK],
+            [BLACK_PAWN, BLACK_PAWN,   BLACK_PAWN,   BLACK_PAWN,  BLACK_PAWN, BLACK_PAWN,   BLACK_PAWN,   BLACK_PAWN],
+            [EMPTY,      EMPTY,        EMPTY,        EMPTY,       EMPTY,      EMPTY,        EMPTY,        EMPTY],
+            [EMPTY,      EMPTY,        EMPTY,        EMPTY,       EMPTY,      EMPTY,        EMPTY,        EMPTY],
+            [EMPTY,      EMPTY,        EMPTY,        EMPTY,       EMPTY,      EMPTY,        EMPTY,        EMPTY],
+            [EMPTY,      EMPTY,        EMPTY,        EMPTY,       EMPTY,      EMPTY,        EMPTY,        EMPTY],
+            [WHITE_PAWN, WHITE_PAWN,   WHITE_PAWN,   WHITE_PAWN,  WHITE_PAWN, WHITE_PAWN,   WHITE_PAWN,   WHITE_PAWN],
+            [WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK]
+        ];
+        this.colors = {};
+    }
+    
+    addColorLayer(squareID, colorString) {
+        let key = "" + squareID;
+        if (this.colors.hasOwnProperty(key)) {
+            this.colors[key].push(colorString);
+        } else {
+            this.colors[key] = [colorString];
+        }
+    }
+    
+    popColorLayer(squareID) {
+        let key = "" + squareID;
+        if (this.colors.hasOwnProperty(key) && this.colors[key].length > 0) {
+            return this.colors[key].pop();
+        }
+        return null;
+    }
+    
+    getColorLayer(squareID) {
+        let key = "" + squareID;
+        if (this.colors.hasOwnProperty(key) && this.colors[key].length > 0) {
+            return this.colors[key].at(-1);
+        }
+        return "white_tile";
+    }
+    
+    toggleSquare(squareID) {
+        
+    }
+    
+    render() {
+        for (let i = 0; i < 64; i++) {
+            let cell = document.getElementById("s" + i);
+            cell.className = this.getColorLayer(i);
+        }
+    }
+}
+
 /**
  * Square IDs are integers:
  * 0  1  2  3  4  5  6  7
@@ -53,10 +133,33 @@ function toCoords(square) {
     }
 }
 
+function initializeBoardColors(board, i, j, squareID) {
+    let iEven = (i & 1) == 0;
+    let jEven = (j & 1) == 0;
+    if ((iEven && !jEven) || (!iEven && jEven)) {
+        board.addColorLayer(squareID, "blue_tile");
+    }
+}
+
 function initializeBoard() {
+    let graphicalBoard = document.getElementById("chessboard");
+    let board = new Board(graphicalBoard);
+    for (let i = 0; i < BOARD_HEIGHT; i++) {
+        let row = document.createElement("tr");
+        for (let j = 0; j < BOARD_WIDTH; j++) {
+            let cell = document.createElement("td");
+            row.appendChild(cell);
+            let currentID = toID([i, j]);
+            initializeBoardColors(board, i, j, currentID);
+            cell.id = "s" + currentID;
+        }
+        graphicalBoard.appendChild(row);
+    }
+    return board;
 }
 
 function startUp() {
-    initializeBoard();
+    let board = initializeBoard();
     testCoordConversions();
+    board.render();
 }
