@@ -51,7 +51,7 @@ class Board {
         ];
         this.colors = {};
     }
-    
+
     addColorLayer(squareID, colorString) {
         let key = "" + squareID;
         if (this.colors.hasOwnProperty(key)) {
@@ -60,7 +60,7 @@ class Board {
             this.colors[key] = [colorString];
         }
     }
-    
+
     popColorLayer(squareID) {
         let key = "" + squareID;
         if (this.colors.hasOwnProperty(key) && this.colors[key].length > 0) {
@@ -68,7 +68,7 @@ class Board {
         }
         return null;
     }
-    
+
     getColorLayer(squareID) {
         let key = "" + squareID;
         if (this.colors.hasOwnProperty(key) && this.colors[key].length > 0) {
@@ -76,11 +76,24 @@ class Board {
         }
         return "white_tile";
     }
-    
+
     toggleSquare(squareID) {
-        
+        let key = "" + squareID;
+        if (this.colors.hasOwnProperty(key) && this.colors[key].length > 0 && this.colors[key].at(-1) !== "blue_tile") {
+            this.popColorLayer(squareID);
+            this.render();
+            return;
+        }
+        let [i, j] = toCoords(squareID);
+        let piece = this.grid[i][j];
+        if (piece & BLACK) {
+            this.addColorLayer(squareID, "opponents_selected_tile");
+        } else {
+            this.addColorLayer(squareID, "selected_tile");
+        }
+        this.render();
     }
-    
+
     render() {
         for (let id = 0; id < 64; id++) {
             let cell = document.getElementById("s" + id);
@@ -164,6 +177,10 @@ function initializeBoard() {
             let currentID = toID([i, j]);
             initializeBoardColors(board, i, j, currentID);
             cell.id = "s" + currentID;
+            // We are capturing currentID, so it's important
+            // that currentID is declared as 'let' and not 'var'
+            // inside this for-loop block
+            cell.addEventListener("click", () => board.toggleSquare(currentID));
         }
         graphicalBoard.appendChild(row);
     }
