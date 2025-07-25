@@ -23,4 +23,3 @@ function getKingMoves(i, j, abbreviated) {
     return [[i - 1, j - 1], [i - 1, j + 1], [i + 1, j - 1], [i + 1, j + 1],
             [i, j + 1], [i + 1, j], [i, j - 1], [i - 1, j]];
 }
-

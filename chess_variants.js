@@ -38,9 +38,23 @@ const PIECE_SYMBOLS = {
 };
 const NO_SELECTION = -1;
 
+function getMoves(piece, i, j, color, grid) {
+    switch (piece & KIND) {
+        case KNIGHT:
+            return filterLegalMoves(getKnightMoves(i, j), color, grid).map(toID);
+        case KING:
+            return filterLegalMoves(getKingMoves(i, j), color, grid).map(toID);
+    }
+    return [];
+}
+
 class Board {
     constructor(graphicalBoard) {
         this.graphicalBoard = graphicalBoard;
+        this.resetData();
+    }
+    
+    resetData() {
         this.grid = [
             [BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING, BLACK_BISHOP, BLACK_KNIGHT, BLACK_ROOK],
             [BLACK_PAWN, BLACK_PAWN,   BLACK_PAWN,   BLACK_PAWN,  BLACK_PAWN, BLACK_PAWN,   BLACK_PAWN,   BLACK_PAWN],
@@ -54,6 +68,7 @@ class Board {
         this.colors = {};
         this.nextMoves = [];
         this.selectedPieceID = NO_SELECTION;
+        this.opponent = new RandomMoveAI(this);
     }
 
     addColorLayer(squareID, colorString) {
@@ -97,14 +112,7 @@ class Board {
     showMovesForPiece(i, j, squareID) {
         this.resetMoves();
         let piece = this.grid[i][j];
-        switch (piece & KIND) {
-            case KNIGHT:
-                this.nextMoves = filterLegalMoves(getKnightMoves(i, j), WHITE, this.grid).map(toID);
-                break;
-            case KING:
-                this.nextMoves = filterLegalMoves(getKingMoves(i, j), WHITE, this.grid).map(toID);
-                break;
-        }
+        this.nextMoves = getMoves(piece, i, j, WHITE, this.grid);
         for (let move of this.nextMoves) {
             this.addColorLayer(move, "move_to_tile");
         }
@@ -112,6 +120,7 @@ class Board {
     }
 
     makeMove(destination) {
+        // TODO: save this data so that we can undo moves
         if (this.selectedPieceID !== NO_SELECTION) {
             let [i, j] = toCoords(this.selectedPieceID);
             let [iPrime, jPrime] = toCoords(destination);
@@ -135,7 +144,11 @@ class Board {
         this.eraseColorFromAll("opponents_selected_tile");
         this.eraseColorFromAll("selected_tile");
         if (this.nextMoves.includes(squareID)) {
+            // We're making a move so don't mark the opponent's move anymore
+            this.eraseColorFromAll("opponent_moved_tile");
             this.makeMove(squareID);
+            // The opponent will move immediately after
+            this.opponent.chooseMove();
         } else if (piece & BLACK) {
             this.addColorLayer(squareID, "opponents_selected_tile");
         } else {
