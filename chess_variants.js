@@ -30,11 +30,13 @@ const WHITE_KNIGHT = WHITE | KNIGHT;
 const WHITE_PAWN = WHITE | PAWN;
 
 const PIECE_SYMBOLS = {
+    [EMPTY]: "",
     [BLACK_KING]: "&#x265a;", [BLACK_QUEEN]: "&#x265b;", [BLACK_ROOK]: "&#x265c;",
     [BLACK_BISHOP]: "&#x265d;", [BLACK_KNIGHT]: "&#x265e;", [BLACK_PAWN]: "&#x265f;",
     [WHITE_KING]: "&#x2654;", [WHITE_QUEEN]: "&#x2655;", [WHITE_ROOK]: "&#x2656;",
     [WHITE_BISHOP]: "&#x2657;", [WHITE_KNIGHT]: "&#x2658;", [WHITE_PAWN]: "&#x2659;"
 };
+const NO_SELECTION = -1;
 
 class Board {
     constructor(graphicalBoard) {
@@ -50,6 +52,8 @@ class Board {
             [WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK]
         ];
         this.colors = {};
+        this.nextMoves = [];
+        this.selectedPieceID = NO_SELECTION;
     }
 
     addColorLayer(squareID, colorString) {
@@ -85,10 +89,44 @@ class Board {
         }
     }
 
+    resetMoves() {
+        this.eraseColorFromAll("move_to_tile");
+        this.nextMoves = [];
+    }
+
+    showMovesForPiece(i, j, squareID) {
+        this.resetMoves();
+        let piece = this.grid[i][j];
+        switch (piece & KIND) {
+            case KNIGHT:
+                this.nextMoves = filterLegalMoves(getKnightMoves(i, j), WHITE, this.grid).map(toID);
+                break;
+            case KING:
+                this.nextMoves = filterLegalMoves(getKingMoves(i, j), WHITE, this.grid).map(toID);
+                break;
+        }
+        for (let move of this.nextMoves) {
+            this.addColorLayer(move, "move_to_tile");
+        }
+        this.selectedPieceID = squareID;
+    }
+
+    makeMove(destination) {
+        if (this.selectedPieceID !== NO_SELECTION) {
+            let [i, j] = toCoords(this.selectedPieceID);
+            let [iPrime, jPrime] = toCoords(destination);
+            this.grid[iPrime][jPrime] = this.grid[i][j]; // move the piece
+            this.grid[i][j] = EMPTY; // delete the old piece
+            this.selectedPieceID = NO_SELECTION;
+            this.resetMoves();
+        }
+    }
+
     toggleSquare(squareID) {
         let key = "" + squareID;
-        if (this.colors.hasOwnProperty(key) && this.colors[key].length > 0 && this.colors[key].at(-1) !== "blue_tile") {
+        if (squareID === this.selectedPieceID) {
             this.popColorLayer(squareID);
+            this.resetMoves();
             this.render();
             return;
         }
@@ -96,10 +134,13 @@ class Board {
         let piece = this.grid[i][j];
         this.eraseColorFromAll("opponents_selected_tile");
         this.eraseColorFromAll("selected_tile");
-        if (piece & BLACK) {
+        if (this.nextMoves.includes(squareID)) {
+            this.makeMove(squareID);
+        } else if (piece & BLACK) {
             this.addColorLayer(squareID, "opponents_selected_tile");
         } else {
             this.addColorLayer(squareID, "selected_tile");
+            this.showMovesForPiece(i, j, squareID);
         }
         this.render();
     }
@@ -110,9 +151,7 @@ class Board {
             cell.className = this.getColorLayer(id) + " piece";
             let [i, j] = toCoords(id);
             let piece = this.grid[i][j];
-            if (piece !== EMPTY) {
-                cell.innerHTML = PIECE_SYMBOLS[piece];
-            }
+            cell.innerHTML = PIECE_SYMBOLS[piece];
         }
     }
 }
@@ -133,7 +172,7 @@ class Board {
  * As well as coordinate pairs for nested array indexing:
  * [0,0] [0,1] [0,2] ...
  * ...
- * [7,0] [7,1] [7,2] ... 
+ * [7,0] [7,1] [7,2] ...
  */
 function toID(square) {
     if (Array.isArray(square)) {
