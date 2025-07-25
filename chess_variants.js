@@ -77,6 +77,14 @@ class Board {
         return "white_tile";
     }
 
+    eraseColorFromAll(colorString) {
+        for (let key in this.colors) {
+            if (this.colors.hasOwnProperty(key)) {
+                this.colors[key] = this.colors[key].filter(color => color !== colorString);
+            }
+        }
+    }
+
     toggleSquare(squareID) {
         let key = "" + squareID;
         if (this.colors.hasOwnProperty(key) && this.colors[key].length > 0 && this.colors[key].at(-1) !== "blue_tile") {
@@ -86,6 +94,8 @@ class Board {
         }
         let [i, j] = toCoords(squareID);
         let piece = this.grid[i][j];
+        this.eraseColorFromAll("opponents_selected_tile");
+        this.eraseColorFromAll("selected_tile");
         if (piece & BLACK) {
             this.addColorLayer(squareID, "opponents_selected_tile");
         } else {

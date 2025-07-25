@@ -10,6 +10,7 @@ td, th {
 
 .piece {
     font-size:50px;
+    user-select: none; /* User can select tiles with JS, but the text glyph itself should not be selectable */
 }
 
 .move_to_tile {
