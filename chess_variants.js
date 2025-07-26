@@ -44,6 +44,8 @@ function getMoves(piece, i, j, color, grid) {
             return filterLegalMoves(getKnightMoves(i, j), color, grid).map(toID);
         case KING:
             return filterLegalMoves(getKingMoves(i, j), color, grid).map(toID);
+        case PAWN:
+            return getPawnMoves(i, j, grid).map(toID);
     }
     return [];
 }
