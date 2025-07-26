@@ -77,7 +77,7 @@ function getBishopMoves(i, j, grid) {
     if (iPrime >= 0 && jPrime >= 0 && (grid[iPrime][jPrime] & COLOR) !== bishopColor) {
         collectedCoords.push([iPrime, jPrime]);
     }
-    /* Move northeast until we hit an obstacle. */
+    /* Move southwest until we hit an obstacle. */
     for (iPrime = i + 1, jPrime = j - 1;
          iPrime < BOARD_HEIGHT && jPrime >= 0 && grid[iPrime][jPrime] === EMPTY;
          ++iPrime, --jPrime) {
@@ -86,7 +86,7 @@ function getBishopMoves(i, j, grid) {
     if (iPrime < BOARD_HEIGHT && jPrime >= 0 && (grid[iPrime][jPrime] & COLOR) !== bishopColor) {
         collectedCoords.push([iPrime, jPrime]);
     }
-    /* Move southwest until we hit an obstacle. */
+    /* Move northeast until we hit an obstacle. */
     for (iPrime = i - 1, jPrime = j + 1;
          iPrime >= 0 && jPrime < BOARD_WIDTH && grid[iPrime][jPrime] === EMPTY;
          --iPrime, ++jPrime) {
@@ -103,6 +103,42 @@ function getBishopMoves(i, j, grid) {
     }
     if (iPrime < BOARD_HEIGHT && jPrime < BOARD_WIDTH && (grid[iPrime][jPrime] & COLOR) !== bishopColor) {
         collectedCoords.push([iPrime, jPrime]);
+    }
+    return collectedCoords;
+}
+
+function getRookMoves(i, j, grid) {
+    let rookColor = grid[i][j] & COLOR;
+    let collectedCoords = [];
+    let iPrime;
+    let jPrime;
+    /* Move north until we hit an obstacle. */
+    for (iPrime = i - 1; iPrime >= 0 && grid[iPrime][j] === EMPTY; --iPrime) {
+        collectedCoords.push([iPrime, j]);
+    }
+    if (iPrime >= 0 && (grid[iPrime][j] & COLOR) !== rookColor) {
+        collectedCoords.push([iPrime, j]);
+    }
+    /* Move south until we hit an obstacle. */
+    for (iPrime = i + 1; iPrime < BOARD_HEIGHT && grid[iPrime][j] === EMPTY; ++iPrime) {
+        collectedCoords.push([iPrime, j]);
+    }
+    if (iPrime < BOARD_HEIGHT && (grid[iPrime][j] & COLOR) !== rookColor) {
+        collectedCoords.push([iPrime, j]);
+    }
+    /* Move west until we hit an obstacle. */
+    for (jPrime = j - 1; jPrime >= 0 && grid[i][jPrime] === EMPTY; --jPrime) {
+        collectedCoords.push([i, jPrime]);
+    }
+    if (jPrime >= 0 && (grid[i][jPrime] & COLOR) !== rookColor) {
+        collectedCoords.push([i, jPrime]);
+    }
+    /* Move east until we hit an obstacle. */
+    for (jPrime = j + 1; jPrime < BOARD_WIDTH && grid[i][jPrime] === EMPTY; ++jPrime) {
+        collectedCoords.push([i, jPrime]);
+    }
+    if (jPrime < BOARD_WIDTH && (grid[i][jPrime] & COLOR) !== rookColor) {
+        collectedCoords.push([i, jPrime]);
     }
     return collectedCoords;
 }
