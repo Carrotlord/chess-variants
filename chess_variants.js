@@ -42,6 +42,8 @@ function getMoves(piece, i, j, color, grid) {
     switch (piece & KIND) {
         case KING:
             return filterLegalMoves(getKingMoves(i, j), color, grid).map(toID);
+        case QUEEN:
+            return getQueenMoves(i, j, grid).map(toID);
         case ROOK:
             return getRookMoves(i, j, grid).map(toID);
         case BISHOP:

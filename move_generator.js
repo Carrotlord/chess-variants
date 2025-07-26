@@ -142,3 +142,7 @@ function getRookMoves(i, j, grid) {
     }
     return collectedCoords;
 }
+
+function getQueenMoves(i, j, grid) {
+    return getBishopMoves(i, j, grid).concat(getRookMoves(i, j, grid));
+}
