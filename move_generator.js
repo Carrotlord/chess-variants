@@ -69,8 +69,8 @@ function getBishopMoves(i, j, grid) {
     let iPrime;
     let jPrime;
     /* Move northwest until we hit an obstacle. */
-    for (iPrime = i, jPrime = j;
-         iPrime >= 0 && jPrime >= 0 && (grid[iPrime][jPrime] === EMPTY || iPrime === i);
+    for (iPrime = i - 1, jPrime = j - 1;
+         iPrime >= 0 && jPrime >= 0 && grid[iPrime][jPrime] === EMPTY;
          --iPrime, --jPrime) {
         collectedCoords.push([iPrime, jPrime]);
     }
@@ -78,8 +78,8 @@ function getBishopMoves(i, j, grid) {
         collectedCoords.push([iPrime, jPrime]);
     }
     /* Move northeast until we hit an obstacle. */
-    for (iPrime = i, jPrime = j;
-         iPrime < BOARD_HEIGHT && jPrime >= 0 && (grid[iPrime][jPrime] === EMPTY || iPrime === i);
+    for (iPrime = i + 1, jPrime = j - 1;
+         iPrime < BOARD_HEIGHT && jPrime >= 0 && grid[iPrime][jPrime] === EMPTY;
          ++iPrime, --jPrime) {
         collectedCoords.push([iPrime, jPrime]);
     }
@@ -87,8 +87,8 @@ function getBishopMoves(i, j, grid) {
         collectedCoords.push([iPrime, jPrime]);
     }
     /* Move southwest until we hit an obstacle. */
-    for (iPrime = i, jPrime = j;
-         iPrime >= 0 && jPrime < BOARD_WIDTH && (grid[iPrime][jPrime] === EMPTY || iPrime === i);
+    for (iPrime = i - 1, jPrime = j + 1;
+         iPrime >= 0 && jPrime < BOARD_WIDTH && grid[iPrime][jPrime] === EMPTY;
          --iPrime, ++jPrime) {
         collectedCoords.push([iPrime, jPrime]);
     }
@@ -96,8 +96,8 @@ function getBishopMoves(i, j, grid) {
         collectedCoords.push([iPrime, jPrime]);
     }
     /* Move southeast until we hit an obstacle. */
-    for (iPrime = i, jPrime = j;
-         iPrime < BOARD_HEIGHT && jPrime < BOARD_WIDTH && (grid[iPrime][jPrime] === EMPTY || iPrime === i);
+    for (iPrime = i + 1, jPrime = j + 1;
+         iPrime < BOARD_HEIGHT && jPrime < BOARD_WIDTH && grid[iPrime][jPrime] === EMPTY;
          ++iPrime, ++jPrime) {
         collectedCoords.push([iPrime, jPrime]);
     }
