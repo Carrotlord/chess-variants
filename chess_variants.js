@@ -132,7 +132,16 @@ class Board {
         if (this.selectedPieceID !== NO_SELECTION) {
             let [i, j] = toCoords(this.selectedPieceID);
             let [iPrime, jPrime] = toCoords(destination);
-            this.grid[iPrime][jPrime] = this.grid[i][j]; // move the piece
+            let piece = this.grid[i][j];
+            // Promote pawns:
+            if (iPrime === 0 && piece === WHITE_PAWN) {
+                // TODO: a player can promote this pawn
+                // to a rook, bishop, or knight too
+                piece = WHITE_QUEEN;
+            } else if (iPrime === BOARD_HEIGHT - 1 && piece === BLACK_PAWN) {
+                piece = BLACK_QUEEN;
+            }
+            this.grid[iPrime][jPrime] = piece; // move the piece
             this.grid[i][j] = EMPTY; // delete the old piece
             this.selectedPieceID = NO_SELECTION;
             this.resetMoves();
