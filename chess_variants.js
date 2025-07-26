@@ -40,10 +40,12 @@ const NO_SELECTION = -1;
 
 function getMoves(piece, i, j, color, grid) {
     switch (piece & KIND) {
-        case KNIGHT:
-            return filterLegalMoves(getKnightMoves(i, j), color, grid).map(toID);
         case KING:
             return filterLegalMoves(getKingMoves(i, j), color, grid).map(toID);
+        case BISHOP:
+            return getBishopMoves(i, j, grid).map(toID);
+        case KNIGHT:
+            return filterLegalMoves(getKnightMoves(i, j), color, grid).map(toID);
         case PAWN:
             return getPawnMoves(i, j, grid).map(toID);
     }

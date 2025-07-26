@@ -62,3 +62,47 @@ function getPawnMoves(i, j, grid) {
     }
     return moves;
 }
+
+function getBishopMoves(i, j, grid) {
+    let bishopColor = grid[i][j] & COLOR;
+    let collectedCoords = [];
+    let iPrime;
+    let jPrime;
+    /* Move northwest until we hit an obstacle. */
+    for (iPrime = i, jPrime = j;
+         iPrime >= 0 && jPrime >= 0 && (grid[iPrime][jPrime] === EMPTY || iPrime === i);
+         --iPrime, --jPrime) {
+        collectedCoords.push([iPrime, jPrime]);
+    }
+    if (iPrime >= 0 && jPrime >= 0 && (grid[iPrime][jPrime] & COLOR) !== bishopColor) {
+        collectedCoords.push([iPrime, jPrime]);
+    }
+    /* Move northeast until we hit an obstacle. */
+    for (iPrime = i, jPrime = j;
+         iPrime < BOARD_HEIGHT && jPrime >= 0 && (grid[iPrime][jPrime] === EMPTY || iPrime === i);
+         ++iPrime, --jPrime) {
+        collectedCoords.push([iPrime, jPrime]);
+    }
+    if (iPrime < BOARD_HEIGHT && jPrime >= 0 && (grid[iPrime][jPrime] & COLOR) !== bishopColor) {
+        collectedCoords.push([iPrime, jPrime]);
+    }
+    /* Move southwest until we hit an obstacle. */
+    for (iPrime = i, jPrime = j;
+         iPrime >= 0 && jPrime < BOARD_WIDTH && (grid[iPrime][jPrime] === EMPTY || iPrime === i);
+         --iPrime, ++jPrime) {
+        collectedCoords.push([iPrime, jPrime]);
+    }
+    if (iPrime >= 0 && jPrime < BOARD_WIDTH && (grid[iPrime][jPrime] & COLOR) !== bishopColor) {
+        collectedCoords.push([iPrime, jPrime]);
+    }
+    /* Move southeast until we hit an obstacle. */
+    for (iPrime = i, jPrime = j;
+         iPrime < BOARD_HEIGHT && jPrime < BOARD_WIDTH && (grid[iPrime][jPrime] === EMPTY || iPrime === i);
+         ++iPrime, ++jPrime) {
+        collectedCoords.push([iPrime, jPrime]);
+    }
+    if (iPrime < BOARD_HEIGHT && jPrime < BOARD_WIDTH && (grid[iPrime][jPrime] & COLOR) !== bishopColor) {
+        collectedCoords.push([iPrime, jPrime]);
+    }
+    return collectedCoords;
+}

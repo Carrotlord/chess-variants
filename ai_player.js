@@ -67,8 +67,7 @@ class RandomMoveAI {
         for (let i = 0; i < BOARD_HEIGHT; i++) {
             for (let j = 0; j < BOARD_WIDTH; j++) {
                 let piece = this.board.grid[i][j];
-                // TODO: right now this can only move knights, pawns, and the king
-                if (piece === BLACK_KNIGHT || piece === BLACK_PAWN || piece == BLACK_KING) {
+                if (piece & BLACK) {
                     choices.push([piece, i, j]);
                 }
             }
