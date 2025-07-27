@@ -5,16 +5,22 @@ body {
 td, th {
     border: 1px black solid;
     border-collapse: collapse;
-    height: 64px;
-    width: 64px;
+    height: 72px;
+    width: 72px;
     text-align: center;
     /* display: table-cell; */
     vertical-align: middle;
 }
 
 .piece {
-    font-size:50px;
+    font-size: 60px;
     user-select: none; /* User can select tiles with JS, but the text glyph itself should not be selectable */
+}
+
+.coordinate {
+    font-size: 16px;
+    font-family: Calibri,Consolas,monospace;
+    user-select: none;
 }
 
 .move_to_tile {
@@ -58,6 +64,7 @@ td, th {
     text-align: left;
     font-family: Calibri,Consolas,monospace;
     border: none;
+    width: 250px;
 }
 
 #chatroom {
@@ -70,4 +77,15 @@ td, th {
 #chessboard {
     border: 1px black solid;
     border-collapse: collapse;
+}
+
+#top_level_container {
+    border: 0;
+    table-layout: fixed;
+}
+
+#chess_container {
+    border: none;
+    width: 650px;
+    vertical-align: top;
 }

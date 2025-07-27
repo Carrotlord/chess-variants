@@ -86,11 +86,13 @@ class Board {
             [WHITE_PAWN, WHITE_PAWN,   WHITE_PAWN,   WHITE_PAWN,  WHITE_PAWN, WHITE_PAWN,   WHITE_PAWN,   WHITE_PAWN],
             [WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK]
         ];
+        this.showCoordinates = false;
         this.colors = {};
         this.nextMoves = [];
         this.selectedPieceID = NO_SELECTION;
         this.opponent = new RandomMoveAI(this);
-        this.cachedKingPositionID = toID("e1"); // The white king starts on "e1"
+        this.cachedWhiteKingPositionID = toID("e1"); // The white king starts on "e1"
+        this.cachedBlackKingPositionID = toID("e8"); // The black king starts on "e8"
         this.moveHistory = [];
     }
 
@@ -174,6 +176,14 @@ class Board {
         let [i, j] = toCoords(this.selectedPieceID);
         let [iPrime, jPrime] = toCoords(destination);
         let piece = this.grid[i][j];
+        if ((piece & KIND) === KING) {
+            // Save the new position of the king
+            if (piece & BLACK) {
+                this.cachedBlackKingPositionID = toID([iPrime, jPrime]);
+            } else {
+                this.cachedWhiteKingPositionID = toID([iPrime, jPrime]);
+            }
+        }
         let captured = this.grid[iPrime][jPrime];
         // Promote pawns:
         let promoted = false;
@@ -203,6 +213,14 @@ class Board {
 
         let [i, j] = toCoords(start);
         let [iPrime, jPrime] = toCoords(end);
+        if ((piece & KIND) === KING) {
+            // Restore the previous position of the king
+            if (piece & BLACK) {
+                this.cachedBlackKingPositionID = toID([i, j]);
+            } else {
+                this.cachedWhiteKingPositionID = toID([i, j]);
+            }
+        }
         // Undo pawn promotion:
         if (promote) {
             piece = piece & BLACK ? BLACK_PAWN : WHITE_PAWN;
@@ -250,6 +268,16 @@ class Board {
             let [i, j] = toCoords(id);
             let piece = this.grid[i][j];
             cell.innerHTML = PIECE_SYMBOLS[piece];
+            if (this.showCoordinates) {
+                let algebraic = toAlgebraic(id);
+                cell.title = algebraic;
+                let span = document.createElement("span");
+                span.className = "coordinate";
+                span.appendChild(document.createTextNode(algebraic));
+                cell.appendChild(span);
+            } else {
+                cell.removeAttribute("title");
+            }
         }
     }
 }
@@ -343,10 +371,8 @@ function highlightUndoPly(ply, board) {
     }
 }
 
-function startUp() {
-    let board = initializeBoard();
-    testCoordConversions();
-    board.render();
+/** Add event listeners for clickable buttons */
+function setupButtons(board) {
     document.getElementById("undo_move").addEventListener("click", () => {
         // When we undo a move, we are actually undoing a "ply"
         // which is a half-move by either black or white.
@@ -365,4 +391,21 @@ function startUp() {
         highlightUndoPly(secondPly, board);
         board.render();
     });
+    document.getElementById("show_coords").addEventListener("click", (eventObj) => {
+        let elem = eventObj.target;
+        if (elem.firstChild.nodeValue === "Show coordinates") {
+            board.showCoordinates = true;
+            elem.firstChild.nodeValue = "Hide coordinates";
+        } else {
+            board.showCoordinates = false;
+            elem.firstChild.nodeValue = "Show coordinates";
+        }
+        board.render();
+    });
+}
+
+function startUp() {
+    let board = initializeBoard();
+    board.render();
+    setupButtons(board);
 }
