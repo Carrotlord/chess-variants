@@ -3,19 +3,25 @@ function markOpponentMove(fromID, destID, board) {
     board.addColorLayer(destID, "opponent_moved_tile");
 }
 
-class RandomMoveAI {
+class AbstractAI {
     constructor(board) {
         this.board = board;
     }
 
     stalemate() {
-        window.alert("Opponent has no legal moves, but is not in check. Stalemate!");
-        this.gameOver();
+        this.board.render();
+        setTimeout(() => {
+            window.alert("Opponent has no legal moves, but is not in check. Stalemate!");
+            this.gameOver();
+        }, 1);
     }
 
     resign() {
-        window.alert("Opponent has lost to checkmate. You win!");
-        this.gameOver();
+        this.board.render();
+        setTimeout(() => {
+            window.alert("Opponent has lost to checkmate. You win!");
+            this.gameOver();
+        }, 1);
     }
 
     gameOver() {
@@ -56,6 +62,20 @@ class RandomMoveAI {
         return arr[index];
     }
 
+    noLegalMoves() {
+        if (detectKingInCheck(this.board, BLACK) === null) {
+            this.stalemate();  // We're not in check, but can't move anywhere
+        } else {
+            this.resign();     // It's checkmate
+        }
+    }
+}
+
+class RandomMoveAI extends AbstractAI {
+    constructor(board) {
+        super(board);
+    }
+
     getPartialLegalMoves(choices) {
         while (choices.length > 0) {
             let chosen = this.removeRandomElement(choices);
@@ -67,12 +87,7 @@ class RandomMoveAI {
                 return [chosen, destinationIDs];
             }
         }
-        // There are no legal moves!
-        if (detectKingInCheck(this.board, BLACK) === null) {
-            this.stalemate();  // We're not in check, but can't move anywhere
-        } else {
-            this.resign();     // It's checkmate
-        }
+        this.noLegalMoves();
         return null;
     }
 
@@ -96,5 +111,77 @@ class RandomMoveAI {
 
         this.board.makeMove(fromID, destID);
         markOpponentMove(fromID, destID, this.board);
+    }
+}
+
+/** The novice AI uses simple heuristics to pick a move without attempting
+ *  to traverse the game tree.
+ */
+class NoviceAI extends AbstractAI {
+    constructor(board) {
+        super(board);
+        this.pieceValues = {
+            [KING]: 99999, [QUEEN]: 9, [ROOK]: 5,
+            [BISHOP]: 3, [KNIGHT]: 3, [PAWN]: 1,
+            [EMPTY]: 0
+        };
+    }
+
+    evaluatePiece(piece) {
+        let val = this.pieceValues[piece & KIND];
+        return piece & WHITE ? -val : val;
+    }
+
+    evaluateBoard() {
+        let sum = 0;
+        for (let row of this.board.grid) {
+            for (let piece of row) {
+                sum += this.evaluatePiece(piece);
+            }
+        }
+        return sum;
+    }
+
+    evaluateMove(origin, destination) {
+        let val = 0;
+        this.board.makeMove(origin, destination);
+        if (isCheckmate(this.board, WHITE)) {
+            val = 999999; // found mate in 1
+        } else {
+            val = this.evaluateBoard();
+        }
+        this.board.undoMove();
+        return val;
+    }
+
+    chooseMove() {
+        let maxVal = -9999999;
+        let bestMoves = [];
+        for (let i = 0; i < BOARD_HEIGHT; i++) {
+            for (let j = 0; j < BOARD_WIDTH; j++) {
+                let piece = this.board.grid[i][j];
+                if (piece & BLACK) {
+                    let chosenID = toID([i, j]);
+                    let moves = getMoves(piece, i, j, BLACK, this.board.grid).filter((move) =>
+                        !isKingInCheckAfterMove(this.board, chosenID, move, BLACK));
+                    for (let move of moves) {
+                        let currentVal = this.evaluateMove(chosenID, move);
+                        if (currentVal > maxVal) {
+                            maxVal = currentVal;
+                            bestMoves = [[chosenID, move]];
+                        } else if (currentVal === maxVal) {
+                            bestMoves.push([chosenID, move]);
+                        }
+                    }
+                }
+            }
+        }
+        if (bestMoves.length > 0) {
+            let [fromID, destID] = this.chooseRandomElement(bestMoves);
+            this.board.makeMove(fromID, destID);
+            markOpponentMove(fromID, destID, this.board);
+        } else {
+            this.noLegalMoves();
+        }
     }
 }

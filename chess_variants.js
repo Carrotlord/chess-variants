@@ -91,7 +91,7 @@ class Board {
         this.nextMoves = [];     // Valid moves
         this.invalidMoves = [];  // Moves that would put the king in check
         this.selectedPieceID = NO_SELECTION;
-        this.opponent = new RandomMoveAI(this);
+        this.opponent = new NoviceAI(this);
         this.cachedWhiteKingPositionID = toID("e1"); // The white king starts on "e1"
         this.cachedBlackKingPositionID = toID("e8"); // The black king starts on "e8"
         this.moveHistory = [];
@@ -260,6 +260,20 @@ class Board {
             this.resetMoves(); // clear the UI
             // The opponent will move immediately after
             this.opponent.chooseMove();
+            if (hasNoLegalMoves(this, WHITE)) {
+                this.render(); // show the opponent's actual move
+                if (detectKingInCheck(this, WHITE) === null) {
+                    setTimeout(() => {
+                        window.alert("You have no legal moves, but are not in check. Stalemate!");
+                        this.opponent.gameOver();
+                    }, 1);
+                } else {
+                    setTimeout(() => {
+                        window.alert("You have lost to checkmate. The opponent wins!");
+                        this.opponent.gameOver();
+                    }, 1);
+                }
+            }
         } else if (this.invalidMoves.includes(squareID)) {
             let [iTarget, jTarget] = toCoords(this.selectedPieceID);
             let targetPiece = this.grid[iTarget][jTarget];

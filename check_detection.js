@@ -121,3 +121,29 @@ function isKingInCheckAfterMove(board, origin, destination, kingColor) {
     board.undoMove();
     return checkingCoords !== null;
 }
+
+function hasNoLegalMoves(board, color) {
+    for (let i = 0; i < BOARD_HEIGHT; i++) {
+        for (let j = 0; j < BOARD_WIDTH; j++) {
+            let piece = board.grid[i][j];
+            let origin = toID([i, j]);
+            if (piece & color) {
+                let moves = getMoves(piece, i, j, color, board.grid);
+                for (let move of moves) {
+                    if (!isKingInCheckAfterMove(board, origin, move, color)) {
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    return true;
+}
+
+function isStalemate(board, color) {
+    return detectKingInCheck(board, color) === null && hasNoLegalMoves(board, color);
+}
+
+function isCheckmate(board, color) {
+    return detectKingInCheck(board, color) !== null && hasNoLegalMoves(board, color);
+}
