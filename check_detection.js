@@ -115,9 +115,9 @@ function detectKingInCheck(board, kingColor) {
     return detectPieceInDanger(i, j, board.grid);
 }
 
-function isKingInCheckAfterMove(board, origin, destination) {
+function isKingInCheckAfterMove(board, origin, destination, kingColor) {
     board.makeMove(origin, destination);
-    let checkingCoords = detectKingInCheck(board, WHITE);
+    let checkingCoords = detectKingInCheck(board, kingColor);
     board.undoMove();
     return checkingCoords !== null;
 }

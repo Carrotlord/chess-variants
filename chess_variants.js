@@ -143,7 +143,7 @@ class Board {
         this.selectedPieceID = squareID;
         let potentialMoves = getMoves(piece, i, j, WHITE, this.grid);
         for (let move of potentialMoves) {
-            if (isKingInCheckAfterMove(this, squareID, move)) {
+            if (isKingInCheckAfterMove(this, squareID, move, WHITE)) {
                 this.addColorLayer(move, "invalid_move_to_tile");
                 this.invalidMoves.push(move);
             } else {

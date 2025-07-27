@@ -6,11 +6,19 @@ function markOpponentMove(fromID, destID, board) {
 class RandomMoveAI {
     constructor(board) {
         this.board = board;
-        this.resigned = false;
+    }
+
+    stalemate() {
+        window.alert("Opponent has no legal moves, but is not in check. Stalemate!");
+        this.gameOver();
     }
 
     resign() {
-        window.alert("Opponent has no legal moves! You win!");
+        window.alert("Opponent has lost to checkmate. You win!");
+        this.gameOver();
+    }
+
+    gameOver() {
         this.board.resetData();
         for (let i = 0; i < BOARD_HEIGHT; i++) {
             for (let j = 0; j < BOARD_WIDTH; j++) {
@@ -51,14 +59,20 @@ class RandomMoveAI {
     getPartialLegalMoves(choices) {
         while (choices.length > 0) {
             let chosen = this.removeRandomElement(choices);
-            let destinationIDs = getMoves(chosen[0], chosen[1], chosen[2], BLACK, this.board.grid);
+            let chosenID = toID(chosen.slice(1));
+            let destinationIDs = getMoves(chosen[0], chosen[1], chosen[2], BLACK, this.board.grid).filter((move) =>
+                !isKingInCheckAfterMove(this.board, chosenID, move, BLACK));
             if (destinationIDs.length > 0) {
                 // We found a piece that can be moved
                 return [chosen, destinationIDs];
             }
         }
         // There are no legal moves!
-        this.resign();
+        if (detectKingInCheck(this.board, BLACK) === null) {
+            this.stalemate();  // We're not in check, but can't move anywhere
+        } else {
+            this.resign();     // It's checkmate
+        }
         return null;
     }
 
