@@ -1,3 +1,7 @@
+body {
+    background-color: white;
+}
+
 td, th {
     border: 1px black solid;
     border-collapse: collapse;
@@ -39,6 +43,14 @@ td, th {
 
 .opponent_moved_tile {
     background-color: green;
+}
+
+.undo_tile {
+    background-color: #ffd700;
+}
+
+.undo_capture {
+    background-color: #ff6347;
 }
 
 #chatroom_holder {

@@ -196,11 +196,11 @@ class Board {
 
     undoMove() {
         if (this.moveHistory.length === 0) {
-            return;
+            return null;
         }
         let lastMove = this.moveHistory.pop();
         let [piece, captured, start, end, farCastle, nearCastle, promote, enPassant] = this.decodeMove(lastMove);
-        
+
         let [i, j] = toCoords(start);
         let [iPrime, jPrime] = toCoords(end);
         // Undo pawn promotion:
@@ -209,9 +209,13 @@ class Board {
         }
         this.grid[iPrime][jPrime] = captured; // revive the captured piece
         this.grid[i][j] = piece; // take the moved piece and put it back
+        // Return the squares we changed (for highlighting)
+        return {piece: [i, j], capture: captured === EMPTY ? null : [iPrime, jPrime]}
     }
 
     toggleSquare(squareID) {
+        this.eraseColorFromAll("undo_tile");
+        this.eraseColorFromAll("undo_capture");
         let key = "" + squareID;
         if (squareID === this.selectedPieceID) {
             this.popColorLayer(squareID);
@@ -330,6 +334,15 @@ function initializeBoard() {
     return board;
 }
 
+function highlightUndoPly(ply, board) {
+    if (ply !== null) {
+        board.addColorLayer(toID(ply.piece), "undo_tile");
+        if (ply.capture !== null) {
+            board.addColorLayer(toID(ply.capture), "undo_capture");
+        }
+    }
+}
+
 function startUp() {
     let board = initializeBoard();
     testCoordConversions();
@@ -339,9 +352,17 @@ function startUp() {
         // which is a half-move by either black or white.
         // To undo both the player's move and the opponent's move,
         // we undo the ply twice:
-        board.undoMove();
-        board.undoMove();
+        let firstPly = board.undoMove();
+        let secondPly = board.undoMove();
         board.eraseColorFromAll("opponent_moved_tile");
+        board.eraseColorFromAll("undo_tile");
+        board.eraseColorFromAll("undo_capture");
+        board.eraseColorFromAll("opponents_selected_tile");
+        board.eraseColorFromAll("selected_tile");
+        board.eraseColorFromAll("move_to_tile");
+        board.nextMoves = [];
+        highlightUndoPly(firstPly, board);
+        highlightUndoPly(secondPly, board);
         board.render();
     });
 }
