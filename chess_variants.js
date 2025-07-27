@@ -2,8 +2,21 @@ const CHAR_CODE_a = "a".charCodeAt(0);
 const BOARD_HEIGHT = 8;
 const BOARD_WIDTH = 8;
 
-const COLOR = 0x3; // bitwise mask for piece color (or empty)
+const COLOR = 0x3;  // bitwise mask for piece color (or empty)
 const KIND = 0x1C;  // bitwise mask for piece kind
+const MOVING_PIECE = 0x1f;         // 5 bits to represent a piece (including color)
+const CAPTURED_PIECE = 0x1f << 5;  // Another 5 bits for the taken piece
+const START_POSITION = 0x3f << 10; // 6 bits to represent a square ID
+const END_POSITION = 0x3f << 16;   // Another 6 bits for the destination square ID
+const FAR_CASTLE = 1 << 22;        // This move is a queenside castle
+const NEAR_CASTLE = 1 << 23;       // This move is a kingside castle
+const PAWN_PROMOTE = 1 << 24;      // This move is a pawn promotion (check MOVING_PIECE for what the promoted piece is)
+const EN_PASSANT = 1 << 25;        // This move is en passant
+const SHIFT_AMOUNT = {
+    [MOVING_PIECE]: 0, [CAPTURED_PIECE]: 5, [START_POSITION]: 10,
+    [END_POSITION]: 16, [FAR_CASTLE]: 22, [NEAR_CASTLE]: 23,
+    [PAWN_PROMOTE]: 24, [EN_PASSANT]: 25
+};
 
 const EMPTY = 0;
 const WHITE = 1;
@@ -61,7 +74,7 @@ class Board {
         this.graphicalBoard = graphicalBoard;
         this.resetData();
     }
-    
+
     resetData() {
         this.grid = [
             [BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING, BLACK_BISHOP, BLACK_KNIGHT, BLACK_ROOK],
@@ -77,6 +90,8 @@ class Board {
         this.nextMoves = [];
         this.selectedPieceID = NO_SELECTION;
         this.opponent = new RandomMoveAI(this);
+        this.cachedKingPositionID = toID("e1"); // The white king starts on "e1"
+        this.moveHistory = [];
     }
 
     addColorLayer(squareID, colorString) {
@@ -127,25 +142,73 @@ class Board {
         this.selectedPieceID = squareID;
     }
 
+    encodeMove(piece, captured, start, end, farCastle, nearCastle, promote, enPassant) {
+        let savedMove = piece;
+        savedMove |= captured << SHIFT_AMOUNT[CAPTURED_PIECE];
+        savedMove |= start << SHIFT_AMOUNT[START_POSITION];
+        savedMove |= end << SHIFT_AMOUNT[END_POSITION];
+        savedMove |= (farCastle ? 1 : 0) << SHIFT_AMOUNT[FAR_CASTLE];
+        savedMove |= (nearCastle ? 1 : 0) << SHIFT_AMOUNT[NEAR_CASTLE];
+        savedMove |= (promote ? 1 : 0) << SHIFT_AMOUNT[PAWN_PROMOTE];
+        savedMove |= (enPassant ? 1 : 0) << SHIFT_AMOUNT[EN_PASSANT];
+        return savedMove;
+    }
+
+    decodeMove(savedMove) {
+        return [
+            savedMove & MOVING_PIECE,
+            (savedMove & CAPTURED_PIECE) >> SHIFT_AMOUNT[CAPTURED_PIECE],
+            (savedMove & START_POSITION) >> SHIFT_AMOUNT[START_POSITION],
+            (savedMove & END_POSITION) >> SHIFT_AMOUNT[END_POSITION],
+            Boolean(savedMove & FAR_CASTLE),
+            Boolean(savedMove & NEAR_CASTLE),
+            Boolean(savedMove & PAWN_PROMOTE),
+            Boolean(savedMove & EN_PASSANT)
+        ];
+    }
+
     makeMove(destination) {
-        // TODO: save this data so that we can undo moves
-        if (this.selectedPieceID !== NO_SELECTION) {
-            let [i, j] = toCoords(this.selectedPieceID);
-            let [iPrime, jPrime] = toCoords(destination);
-            let piece = this.grid[i][j];
-            // Promote pawns:
-            if (iPrime === 0 && piece === WHITE_PAWN) {
-                // TODO: a player can promote this pawn
-                // to a rook, bishop, or knight too
-                piece = WHITE_QUEEN;
-            } else if (iPrime === BOARD_HEIGHT - 1 && piece === BLACK_PAWN) {
-                piece = BLACK_QUEEN;
-            }
-            this.grid[iPrime][jPrime] = piece; // move the piece
-            this.grid[i][j] = EMPTY; // delete the old piece
-            this.selectedPieceID = NO_SELECTION;
-            this.resetMoves();
+        if (this.selectedPieceID === NO_SELECTION) {
+            return;
         }
+        let [i, j] = toCoords(this.selectedPieceID);
+        let [iPrime, jPrime] = toCoords(destination);
+        let piece = this.grid[i][j];
+        let captured = this.grid[iPrime][jPrime];
+        // Promote pawns:
+        let promoted = false;
+        if (iPrime === 0 && piece === WHITE_PAWN) {
+            // TODO: a player can promote this pawn
+            // to a rook, bishop, or knight too
+            piece = WHITE_QUEEN;
+            promoted = true;
+        } else if (iPrime === BOARD_HEIGHT - 1 && piece === BLACK_PAWN) {
+            piece = BLACK_QUEEN;
+            promoted = true;
+        }
+        this.grid[iPrime][jPrime] = piece; // move the piece
+        this.grid[i][j] = EMPTY; // delete the old piece
+        this.moveHistory.push(this.encodeMove(
+            piece, captured, this.selectedPieceID, destination, false, false, promoted, false
+        ));
+        this.selectedPieceID = NO_SELECTION;
+    }
+
+    undoMove() {
+        if (this.moveHistory.length === 0) {
+            return;
+        }
+        let lastMove = this.moveHistory.pop();
+        let [piece, captured, start, end, farCastle, nearCastle, promote, enPassant] = this.decodeMove(lastMove);
+        
+        let [i, j] = toCoords(start);
+        let [iPrime, jPrime] = toCoords(end);
+        // Undo pawn promotion:
+        if (promote) {
+            piece = piece & BLACK ? BLACK_PAWN : WHITE_PAWN;
+        }
+        this.grid[iPrime][jPrime] = captured; // revive the captured piece
+        this.grid[i][j] = piece; // take the moved piece and put it back
     }
 
     toggleSquare(squareID) {
@@ -164,6 +227,7 @@ class Board {
             // We're making a move so don't mark the opponent's move anymore
             this.eraseColorFromAll("opponent_moved_tile");
             this.makeMove(squareID);
+            this.resetMoves(); // clear the UI
             // The opponent will move immediately after
             this.opponent.chooseMove();
         } else if (piece & BLACK) {
@@ -270,4 +334,14 @@ function startUp() {
     let board = initializeBoard();
     testCoordConversions();
     board.render();
+    document.getElementById("undo_move").addEventListener("click", () => {
+        // When we undo a move, we are actually undoing a "ply"
+        // which is a half-move by either black or white.
+        // To undo both the player's move and the opponent's move,
+        // we undo the ply twice:
+        board.undoMove();
+        board.undoMove();
+        board.eraseColorFromAll("opponent_moved_tile");
+        board.render();
+    });
 }
