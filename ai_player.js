@@ -80,8 +80,7 @@ class RandomMoveAI {
         let destID = this.chooseRandomElement(destinationIDs);
         let fromID = toID(chosen.slice(1));
 
-        this.board.selectedPieceID = fromID;
-        this.board.makeMove(destID);
+        this.board.makeMove(fromID, destID);
         markOpponentMove(fromID, destID, this.board);
     }
 }

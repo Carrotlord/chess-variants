@@ -1,31 +1,32 @@
-const DIAGONAL_PIECE = BISHOP | QUEEN;
-const HORIZONTAL_PIECE = ROOK | QUEEN;
-
 function maybeGetPiece(i, j, grid) {
     return outOfBounds(i, j) ? EMPTY : grid[i][j];
 }
 
-function isPieceInDanger(i, j, grid) {
+/** Check if the piece at [i, j] is in danger from an opponent's piece.
+ *  If so, return the coordinates of the other piece that is causing the danger.
+ *  Returns null if there is no such danger.
+ */
+function detectPieceInDanger(i, j, grid) {
     let piece = grid[i][j];
     let color = piece & COLOR;
     // Check for pawn dangers
     if (color === BLACK) {
         let leftPawn = maybeGetPiece(i + 1, j - 1, grid);
         if (leftPawn === WHITE_PAWN) {
-            return true;
+            return [i + 1, j - 1];
         }
         let rightPawn = maybeGetPiece(i + 1, j + 1, grid);
         if (rightPawn === WHITE_PAWN) {
-            return true;
+            return [i + 1, j + 1];
         }
     } else {
         let leftPawn = maybeGetPiece(i - 1, j - 1, grid);
         if (leftPawn === BLACK_PAWN) {
-            return true;
+            return [i - 1, j - 1];
         }
         let rightPawn = maybeGetPiece(i - 1, j + 1, grid);
         if (rightPawn === BLACK_PAWN) {
-            return true;
+            return [i - 1, j + 1];
         }
     }
     // Check for knight dangers
@@ -34,10 +35,10 @@ function isPieceInDanger(i, j, grid) {
         let [iPrime, jPrime] = knightCoord;
         let knight = grid[iPrime][jPrime];
         if (color === BLACK && knight === WHITE_KNIGHT) {
-            return true;
+            return knightCoord;
         }
         if (color === WHITE && knight === BLACK_KNIGHT) {
-            return true;
+            return knightCoord;
         }
     }
     // Check for diagonal dangers
@@ -45,11 +46,12 @@ function isPieceInDanger(i, j, grid) {
     for (let diagonal of possibleDiagonals) {
         let [iPrime, jPrime] = diagonal;
         let diagonalPiece = grid[iPrime][jPrime];
-        if (diagonalPiece & DIAGONAL_PIECE) {
+        let diagonalKind = diagonalPiece & KIND;
+        if (diagonalKind === BISHOP || diagonalKind === QUEEN) {
             if (color !== (diagonalPiece & COLOR)) {
                 // If the colors don't match, it's a danger
                 // from an opponent's bishop or queen
-                return true;
+                return diagonal;
             }
         }
     }
@@ -58,11 +60,12 @@ function isPieceInDanger(i, j, grid) {
     for (let horizontal of possibleHorizontals) {
         let [iPrime, jPrime] = horizontal;
         let horizontalPiece = grid[iPrime][jPrime];
-        if (horizontalPiece & HORIZONTAL_PIECE) {
+        let horizontalKind = horizontalPiece & KIND;
+        if (horizontalKind === ROOK || horizontalKind === QUEEN) {
             if (color !== (horizontalPiece & COLOR)) {
                 // If the colors don't match, it's a danger
                 // from an opponent's rook or queen
-                return true;
+                return horizontal;
             }
         }
     }
@@ -74,11 +77,47 @@ function isPieceInDanger(i, j, grid) {
         let [iPrime, jPrime] = kingCoord;
         let king = grid[iPrime][jPrime];
         if (color === BLACK && king === WHITE_KING) {
-            return true;
+            return kingCoord;
         }
         if (color === WHITE && king === BLACK_KING) {
-            return true;
+            return kingCoord;
         }
     }
-    return false; // this piece is not in danger of being captured
+    return null; // this piece is not in danger of being captured
+}
+
+function generatePieceUnicodeChars() {
+    let result = {};
+    for (let [key, val] of Object.entries(PIECE_SYMBOLS)) {
+        if (val.length === 0) {
+            result[key] = "NONE";
+        } else {
+            let span = document.createElement("span");
+            span.innerHTML = val;
+            result[key] = span.textContent;
+        }
+    }
+    return result;
+}
+const PIECE_UNICODE_CHARS = generatePieceUnicodeChars();
+
+function reportSquare(i, j, grid) {
+    return `${PIECE_UNICODE_CHARS[grid[i][j]]} on ${toAlgebraic([i, j])}`;
+}
+
+function detectKingInCheck(board, kingColor) {
+    let i, j;
+    if (kingColor === BLACK) {
+        [i, j] = toCoords(board.cachedBlackKingPositionID);
+    } else {
+        [i, j] = toCoords(board.cachedWhiteKingPositionID);
+    }
+    return detectPieceInDanger(i, j, board.grid);
+}
+
+function isKingInCheckAfterMove(board, origin, destination) {
+    board.makeMove(origin, destination);
+    let checkingCoords = detectKingInCheck(board, WHITE);
+    board.undoMove();
+    return checkingCoords !== null;
 }

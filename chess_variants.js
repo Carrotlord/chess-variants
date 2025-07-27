@@ -88,7 +88,8 @@ class Board {
         ];
         this.showCoordinates = false;
         this.colors = {};
-        this.nextMoves = [];
+        this.nextMoves = [];     // Valid moves
+        this.invalidMoves = [];  // Moves that would put the king in check
         this.selectedPieceID = NO_SELECTION;
         this.opponent = new RandomMoveAI(this);
         this.cachedWhiteKingPositionID = toID("e1"); // The white king starts on "e1"
@@ -131,17 +132,25 @@ class Board {
 
     resetMoves() {
         this.eraseColorFromAll("move_to_tile");
+        this.eraseColorFromAll("invalid_move_to_tile");
         this.nextMoves = [];
+        this.invalidMoves = [];
     }
 
     showMovesForPiece(i, j, squareID) {
         this.resetMoves();
         let piece = this.grid[i][j];
-        this.nextMoves = getMoves(piece, i, j, WHITE, this.grid);
-        for (let move of this.nextMoves) {
-            this.addColorLayer(move, "move_to_tile");
-        }
         this.selectedPieceID = squareID;
+        let potentialMoves = getMoves(piece, i, j, WHITE, this.grid);
+        for (let move of potentialMoves) {
+            if (isKingInCheckAfterMove(this, squareID, move)) {
+                this.addColorLayer(move, "invalid_move_to_tile");
+                this.invalidMoves.push(move);
+            } else {
+                this.addColorLayer(move, "move_to_tile");
+                this.nextMoves.push(move);
+            }
+        }
     }
 
     encodeMove(piece, captured, start, end, farCastle, nearCastle, promote, enPassant) {
@@ -169,11 +178,8 @@ class Board {
         ];
     }
 
-    makeMove(destination) {
-        if (this.selectedPieceID === NO_SELECTION) {
-            return;
-        }
-        let [i, j] = toCoords(this.selectedPieceID);
+    makeMove(origin, destination) {
+        let [i, j] = toCoords(origin);
         let [iPrime, jPrime] = toCoords(destination);
         let piece = this.grid[i][j];
         if ((piece & KIND) === KING) {
@@ -199,9 +205,8 @@ class Board {
         this.grid[iPrime][jPrime] = piece; // move the piece
         this.grid[i][j] = EMPTY; // delete the old piece
         this.moveHistory.push(this.encodeMove(
-            piece, captured, this.selectedPieceID, destination, false, false, promoted, false
+            piece, captured, origin, destination, false, false, promoted, false
         ));
-        this.selectedPieceID = NO_SELECTION;
     }
 
     undoMove() {
@@ -248,10 +253,23 @@ class Board {
         if (this.nextMoves.includes(squareID)) {
             // We're making a move so don't mark the opponent's move anymore
             this.eraseColorFromAll("opponent_moved_tile");
-            this.makeMove(squareID);
+            if (this.selectedPieceID !== NO_SELECTION) {
+                this.makeMove(this.selectedPieceID, squareID);
+                this.selectedPieceID = NO_SELECTION;
+            }
             this.resetMoves(); // clear the UI
             // The opponent will move immediately after
             this.opponent.chooseMove();
+        } else if (this.invalidMoves.includes(squareID)) {
+            let [iTarget, jTarget] = toCoords(this.selectedPieceID);
+            let targetPiece = this.grid[iTarget][jTarget];
+            if ((targetPiece & KIND) !== KING && detectKingInCheck(this, WHITE) !== null) {
+                window.alert("You can't move there because your king is currently in check.");
+            } else {
+                window.alert("You can't move there because your king would be in check after the move.");
+            }
+            this.selectedPieceID = NO_SELECTION;
+            this.resetMoves();
         } else if (piece & BLACK) {
             this.addColorLayer(squareID, "opponents_selected_tile");
         } else {
@@ -270,13 +288,10 @@ class Board {
             cell.innerHTML = PIECE_SYMBOLS[piece];
             if (this.showCoordinates) {
                 let algebraic = toAlgebraic(id);
-                cell.title = algebraic;
                 let span = document.createElement("span");
                 span.className = "coordinate";
                 span.appendChild(document.createTextNode(algebraic));
                 cell.appendChild(span);
-            } else {
-                cell.removeAttribute("title");
             }
         }
     }
@@ -386,7 +401,9 @@ function setupButtons(board) {
         board.eraseColorFromAll("opponents_selected_tile");
         board.eraseColorFromAll("selected_tile");
         board.eraseColorFromAll("move_to_tile");
+        board.eraseColorFromAll("invalid_move_to_tile");
         board.nextMoves = [];
+        board.invalidMoves = [];
         highlightUndoPly(firstPly, board);
         highlightUndoPly(secondPly, board);
         board.render();

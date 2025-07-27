@@ -39,6 +39,10 @@ td, th {
     background-color: #808080;
 }
 
+.invalid_move_to_tile {
+    background-color: #808080;
+}
+
 .blue_tile {
     background-color: #b0c4de;
 }
