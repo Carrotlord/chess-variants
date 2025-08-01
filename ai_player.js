@@ -185,3 +185,98 @@ class NoviceAI extends AbstractAI {
         }
     }
 }
+
+/** Searches the game tree with a certain default depth */
+class IntermediateAI extends AbstractAI {
+    constructor(board) {
+        super(board);
+        this.pieceValues = {
+            [KING]: 99999, [QUEEN]: 9, [ROOK]: 5,
+            [BISHOP]: 3, [KNIGHT]: 3, [PAWN]: 1,
+            [EMPTY]: 0
+        };
+        this.defaultSearchDepth = 4;
+    }
+
+    evaluatePiece(piece, color) {
+        let val = this.pieceValues[piece & KIND];
+        // If the color matches, it's beneficial
+        return piece & color ? val : -val;
+    }
+
+    evaluateBoard(aiColor) {
+        if (isCheckmate(this.board, aiColor === WHITE ? BLACK : WHITE)) {
+            return 999999; // found mate in 1
+        }
+        let sum = 0;
+        for (let row of this.board.grid) {
+            for (let piece of row) {
+                sum += this.evaluatePiece(piece, aiColor);
+            }
+        }
+        return sum;
+    }
+
+    /* Search algorithm is negamax with no alpha-beta pruning */
+    negamax(depth, color, originalMove) {
+        if (depth <= 0) {
+            // The search is done
+            return {val: this.evaluateBoard(color), move: originalMove};
+        }
+        let bestValue = -9999999;
+        let bestMoves = [];
+        for (let i = 0; i < BOARD_HEIGHT; i++) {
+            for (let j = 0; j < BOARD_WIDTH; j++) {
+                let piece = this.board.grid[i][j];
+                if (piece & color) {
+                    let chosenID = toID([i, j]);
+                    let moves = getMoves(piece, i, j, color, this.board.grid).filter((move) =>
+                        !isKingInCheckAfterMove(this.board, chosenID, move, color));
+                    for (let move of moves) {
+                        this.board.makeMove(chosenID, move);
+                        let result = this.negamax(depth - 1, color === WHITE ? BLACK : WHITE, move);
+                        this.board.undoMove();
+                        let currentValue = -result.val;
+                        if (currentValue > bestValue) {
+                            bestValue = currentValue;
+                            bestMoves = [[chosenID, move]];
+                        } else if (currentValue === bestValue) {
+                            bestMoves.push([chosenID, move]);
+                        }
+                    }
+                }
+            }
+        }
+        if (bestMoves.length === 0) {
+            // We don't have any moves
+            if (isCheckmate(this.board, color)) {
+                // If we're in checkmate, do anything to avoid it
+                return {val: -999999, move: originalMove};
+            } else if (isStalemate(this.board, color)) {
+                if (this.evaluateBoard(color) < 0) {
+                    // If we have less material and we find a stalemate,
+                    // we're happy to accept a draw as the outcome
+                    return {val: 999999, move: originalMove};
+                } else {
+                    // Otherwise avoid the stalemate
+                    return {val: -999999, move: originalMove};
+                }
+            } else {
+                return {val: this.evaluateBoard(color), move: originalMove};
+            }
+        }
+        let bestMove = this.chooseRandomElement(bestMoves);
+        return {val: bestValue, move: bestMove};
+    }
+
+    chooseMove() {
+        let result = this.negamax(this.defaultSearchDepth, BLACK, null);
+        if (result.move !== null) {
+            let [fromID, destID] = result.move;
+            this.board.makeMove(fromID, destID);
+            markOpponentMove(fromID, destID, this.board);
+        } else {
+            this.noLegalMoves();
+        }
+    }
+}

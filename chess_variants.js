@@ -91,7 +91,7 @@ class Board {
         this.nextMoves = [];     // Valid moves
         this.invalidMoves = [];  // Moves that would put the king in check
         this.selectedPieceID = NO_SELECTION;
-        this.opponent = new NoviceAI(this);
+        this.opponent = new IntermediateAI(this);
         this.cachedWhiteKingPositionID = toID("e1"); // The white king starts on "e1"
         this.cachedBlackKingPositionID = toID("e8"); // The black king starts on "e8"
         this.moveHistory = [];
