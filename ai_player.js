@@ -280,3 +280,150 @@ class IntermediateAI extends AbstractAI {
         }
     }
 }
+
+class AdvancedAI extends AbstractAI {
+    constructor(board) {
+        super(board);
+        this.pieceValues = {
+            [KING]: 99999, [QUEEN]: 9, [ROOK]: 5,
+            [BISHOP]: 3, [KNIGHT]: 3, [PAWN]: 1,
+            [EMPTY]: 0
+        };
+        this.defaultSearchDepth = 6;
+    }
+
+    evaluatePiece(piece, color) {
+        let val = this.pieceValues[piece & KIND];
+        // If the color matches, it's beneficial
+        return piece & color ? val : -val;
+    }
+
+    evaluateBoard(aiColor, depth) {
+        if (isCheckmate(this.board, aiColor === WHITE ? BLACK : WHITE)) {
+            // Found checkmate, adjust depth for mate in N
+            return 999999 - this.defaultSearchDepth + depth;
+        } else if (isCheckmate(this.board, aiColor)) {
+            // We're about to lose, adjust depth to avoid mate in N
+            return -999999 + this.defaultSearchDepth - depth;
+        }
+        let sum = 0;
+        for (let row of this.board.grid) {
+            for (let piece of row) {
+                sum += this.evaluatePiece(piece, aiColor);
+            }
+        }
+        return sum;
+    }
+
+    /* Search algorithm is negamax with alpha-beta pruning and move ordering */
+    alphaBetaNegamax(depth, color, originalMove, alpha, beta) {
+        if (depth <= 0) {
+            // The search is done
+            return {val: this.evaluateBoard(color, depth), move: originalMove};
+        }
+        let bestValue = -9999999;
+        let otherColor = color === WHITE ? BLACK : WHITE;
+        let bestMoves = [];
+        let mateInOne = [];
+        let queenCaptures = [];
+        let rookCaptures = [];
+        let knightOrBishopCaptures = [];
+        let pawnCaptures = [];
+        let checks = [];
+        let others = [];
+        for (let i = 0; i < BOARD_HEIGHT; i++) {
+            for (let j = 0; j < BOARD_WIDTH; j++) {
+                let piece = this.board.grid[i][j];
+                if (piece & color) {
+                    let chosenID = toID([i, j]);
+                    let moves = getMoves(piece, i, j, color, this.board.grid).filter((move) =>
+                        !isKingInCheckAfterMove(this.board, chosenID, move, color));
+                    for (let move of moves) {
+                        let [iPrime, jPrime] = toCoords(move);
+                        let capturedKind = this.board.grid[iPrime][jPrime] & KIND;
+                        let fullMove = [chosenID, move];
+                        if (isCheckmateAfterMove(this.board, chosenID, move, otherColor)) {
+                            mateInOne.push(fullMove);
+                            continue;
+                        }
+                        // We don't check the color of the captured
+                        // piece because it's not possible to move onto
+                        // one of your own pieces
+                        switch (capturedKind) {
+                            case QUEEN:
+                                queenCaptures.push(fullMove);
+                                break;
+                            case ROOK:
+                                rookCaptures.push(fullMove);
+                                break;
+                            case KNIGHT:
+                            case BISHOP:
+                                knightOrBishopCaptures.push(fullMove);
+                                break;
+                            case PAWN:
+                                pawnCaptures.push(fullMove);
+                                break;
+                            default:
+                                // If the other king is in check
+                                if (isKingInCheckAfterMove(this.board, chosenID, move, otherColor)) {
+                                    checks.push(fullMove);
+                                } else {
+                                    others.push(fullMove);
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+        let orderedMoves = mateInOne.concat(queenCaptures, rookCaptures, knightOrBishopCaptures, pawnCaptures, checks, others);
+        for (let fullMove of orderedMoves) {
+            let [chosenID, move] = fullMove;
+            this.board.makeMove(chosenID, move);
+            let result = this.alphaBetaNegamax(depth - 1, otherColor, move, -beta, -alpha);
+            this.board.undoMove();
+            let currentValue = -result.val;
+            if (currentValue > bestValue) {
+                bestValue = currentValue;
+                bestMoves = [[chosenID, move]];
+            } else if (currentValue === bestValue) {
+                bestMoves.push([chosenID, move]);
+            }
+            if (bestValue > alpha) {
+                alpha = bestValue;
+            }
+            if (alpha >= beta) {
+                break;
+            }
+        }
+        if (bestMoves.length === 0) {
+            // We don't have any moves
+            if (isStalemate(this.board, color)) {
+                if (this.evaluateBoard(color, depth) < 0) {
+                    // If we have less material and we find a stalemate,
+                    // we're happy to accept a draw as the outcome
+                    return {val: 999999 - this.defaultSearchDepth + depth, move: originalMove};
+                } else {
+                    // Otherwise avoid the stalemate
+                    return {val: -999999 + this.defaultSearchDepth - depth, move: originalMove};
+                }
+            } else {
+                // When we evaluate the board, checkmate is already considered
+                return {val: this.evaluateBoard(color, depth), move: originalMove};
+            }
+        }
+        let bestMove = this.chooseRandomElement(bestMoves);
+        return {val: bestValue, move: bestMove};
+    }
+
+    chooseMove() {
+        let result = this.alphaBetaNegamax(this.defaultSearchDepth, BLACK, null, -9999999, 9999999);
+        if (result.move !== null) {
+            let [fromID, destID] = result.move;
+            this.board.makeMove(fromID, destID);
+            markOpponentMove(fromID, destID, this.board);
+        } else {
+            this.noLegalMoves();
+        }
+    }
+}

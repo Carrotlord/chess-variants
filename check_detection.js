@@ -147,3 +147,10 @@ function isStalemate(board, color) {
 function isCheckmate(board, color) {
     return detectKingInCheck(board, color) !== null && hasNoLegalMoves(board, color);
 }
+
+function isCheckmateAfterMove(board, origin, destination, kingColor) {
+    board.makeMove(origin, destination);
+    let answer = isCheckmate(board, kingColor);
+    board.undoMove();
+    return answer;
+}
