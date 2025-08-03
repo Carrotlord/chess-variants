@@ -11,18 +11,20 @@ class AbstractAI {
 
     stalemate() {
         this.board.render();
-        setTimeout(() => {
-            window.alert("Opponent has no legal moves, but is not in check. Stalemate!");
-            this.gameOver();
-        }, 1);
+        showDialog(
+            ["Opponent has no legal moves,", "but is not in check. Stalemate!"],
+            "Start new game", this.board.startNewGame.bind(this.board),
+            "Back to game", this.board.backToGame.bind(this.board)
+        );
     }
 
     resign() {
         this.board.render();
-        setTimeout(() => {
-            window.alert("Opponent has lost to checkmate. You win!");
-            this.gameOver();
-        }, 1);
+        showDialog(
+            ["Opponent lost to checkmate.", "You win!"],
+            "Start new game", this.board.startNewGame.bind(this.board),
+            "Back to game", this.board.backToGame.bind(this.board)
+        );
     }
 
     gameOver() {

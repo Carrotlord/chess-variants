@@ -243,6 +243,16 @@ class Board {
         return {piece: [i, j], capture: captured === EMPTY ? null : [iPrime, jPrime]}
     }
 
+    startNewGame() {
+        closeDialog();
+        this.opponent.gameOver();
+    }
+
+    backToGame() {
+        closeDialog();
+        this.gameOver = true;
+    }
+
     toggleSquare(squareID) {
         if (this.gameOver) {
             this.eraseColorFromAll("game_over_tile");
@@ -276,25 +286,17 @@ class Board {
             this.opponent.chooseMove();
             this.render();
             if (hasNoLegalMoves(this, WHITE)) {
-                let startNewGame = () => {
-                    closeDialog();
-                    this.opponent.gameOver();
-                };
-                let backToGame = () => {
-                    closeDialog();
-                    this.gameOver = true;
-                }
                 if (detectKingInCheck(this, WHITE) === null) {
                     showDialog(
                         ["You have no legal moves,", "but are not in check. Stalemate!"],
-                        "Start new game", startNewGame,
-                        "Back to game", backToGame
+                        "Start new game", this.startNewGame.bind(this),
+                        "Back to game", this.backToGame.bind(this)
                     );
                 } else {
                     showDialog(
                         ["You have lost to checkmate.", "The opponent wins!"],
-                        "Start new game", startNewGame,
-                        "Back to game", backToGame
+                        "Start new game", this.startNewGame.bind(this),
+                        "Back to game", this.backToGame.bind(this)
                     );
                 }
             }
