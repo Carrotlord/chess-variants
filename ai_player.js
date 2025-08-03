@@ -6,6 +6,7 @@ function markOpponentMove(fromID, destID, board) {
 class AbstractAI {
     constructor(board) {
         this.board = board;
+        this.difficulty = null;
     }
 
     stalemate() {
@@ -25,14 +26,8 @@ class AbstractAI {
     }
 
     gameOver() {
-        this.board.resetData();
-        for (let i = 0; i < BOARD_HEIGHT; i++) {
-            for (let j = 0; j < BOARD_WIDTH; j++) {
-                let currentID = toID([i, j]);
-                initializeBoardColors(this.board, i, j, currentID);
-            }
-        }
-        this.board.render();
+        // Create a reset function and call it right now
+        makeReset(this.board, this.difficulty)();
     }
 
     chooseRandomIndex(arr) {
@@ -121,6 +116,7 @@ class TranspositionTable {
 class RandomMoveAI extends AbstractAI {
     constructor(board) {
         super(board);
+        this.difficulty = "random";
     }
 
     getPartialLegalMoves(choices) {
@@ -172,6 +168,7 @@ class NoviceAI extends AbstractAI {
             [BISHOP]: 3, [KNIGHT]: 3, [PAWN]: 1,
             [EMPTY]: 0
         };
+        this.difficulty = "easy";
     }
 
     evaluatePiece(piece) {
@@ -244,6 +241,7 @@ class IntermediateAI extends AbstractAI {
         };
         this.table = new TranspositionTable();
         this.defaultSearchDepth = 4;
+        this.difficulty = "medium";
     }
 
     evaluatePiece(piece, color) {
@@ -345,6 +343,7 @@ class AdvancedAI extends AbstractAI {
         };
         this.table = new TranspositionTable();
         this.defaultSearchDepth = 6;
+        this.difficulty = "advanced";
     }
 
     evaluatePiece(piece, color) {

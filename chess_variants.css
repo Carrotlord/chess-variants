@@ -141,6 +141,8 @@ body {
     border: 3px outset gray;
     border-radius: 10px;
     padding: 8px;
+    font-size: 15px;
+    font-family: Calibri,Consolas,monospace;
 }
 
 #chatroom_holder > div > button {

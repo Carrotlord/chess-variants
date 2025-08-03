@@ -75,7 +75,7 @@ class Board {
         this.resetData();
     }
 
-    resetData() {
+    resetData(aiName = null) {
         this.grid = [
             [BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING, BLACK_BISHOP, BLACK_KNIGHT, BLACK_ROOK],
             [BLACK_PAWN, BLACK_PAWN,   BLACK_PAWN,   BLACK_PAWN,  BLACK_PAWN, BLACK_PAWN,   BLACK_PAWN,   BLACK_PAWN],
@@ -91,10 +91,17 @@ class Board {
         this.nextMoves = [];     // Valid moves
         this.invalidMoves = [];  // Moves that would put the king in check
         this.selectedPieceID = NO_SELECTION;
-        this.opponent = new IntermediateAI(this);
+        if (aiName === "easy") {
+            this.opponent = new NoviceAI(this);
+        } else if (aiName === "advanced") {
+            this.opponent = new AdvancedAI(this);
+        } else {
+            this.opponent = new IntermediateAI(this);
+        }
         this.cachedWhiteKingPositionID = toID("e1"); // The white king starts on "e1"
         this.cachedBlackKingPositionID = toID("e8"); // The black king starts on "e8"
         this.moveHistory = [];
+        this.gameOver = false;
     }
 
     addColorLayer(squareID, colorString) {
@@ -237,6 +244,12 @@ class Board {
     }
 
     toggleSquare(squareID) {
+        if (this.gameOver) {
+            this.eraseColorFromAll("game_over_tile");
+            this.addColorLayer(squareID, "game_over_tile");
+            this.render();
+            return;
+        }
         this.eraseColorFromAll("undo_tile");
         this.eraseColorFromAll("undo_capture");
         let key = "" + squareID;
@@ -260,23 +273,31 @@ class Board {
             this.resetMoves(); // clear the UI
             this.render();
             // The opponent will move afterwards
-            setTimeout(() => {
-                this.opponent.chooseMove();
-                this.render();
-                if (hasNoLegalMoves(this, WHITE)) {
-                    if (detectKingInCheck(this, WHITE) === null) {
-                        setTimeout(() => {
-                            window.alert("You have no legal moves, but are not in check. Stalemate!");
-                            this.opponent.gameOver();
-                        }, 1);
-                    } else {
-                        setTimeout(() => {
-                            window.alert("You have lost to checkmate. The opponent wins!");
-                            this.opponent.gameOver();
-                        }, 1);
-                    }
+            this.opponent.chooseMove();
+            this.render();
+            if (hasNoLegalMoves(this, WHITE)) {
+                let startNewGame = () => {
+                    closeDialog();
+                    this.opponent.gameOver();
+                };
+                let backToGame = () => {
+                    closeDialog();
+                    this.gameOver = true;
                 }
-            }, 1);
+                if (detectKingInCheck(this, WHITE) === null) {
+                    showDialog(
+                        ["You have no legal moves,", "but are not in check. Stalemate!"],
+                        "Start new game", startNewGame,
+                        "Back to game", backToGame
+                    );
+                } else {
+                    showDialog(
+                        ["You have lost to checkmate.", "The opponent wins!"],
+                        "Start new game", startNewGame,
+                        "Back to game", backToGame
+                    );
+                }
+            }
         } else if (this.invalidMoves.includes(squareID)) {
             let [iTarget, jTarget] = toCoords(this.selectedPieceID);
             let targetPiece = this.grid[iTarget][jTarget];
@@ -403,6 +424,18 @@ function highlightUndoPly(ply, board) {
     }
 }
 
+function makeReset(board, aiDifficulty) {
+    return () => {
+        board.resetData(aiDifficulty);
+        for (let i = 0; i < BOARD_HEIGHT; i++) {
+            for (let j = 0; j < BOARD_WIDTH; j++) {
+                initializeBoardColors(board, i, j, toID([i, j]));
+            }
+        }
+        board.render();
+    };
+}
+
 /** Add event listeners for clickable buttons */
 function setupButtons(board) {
     document.getElementById("undo_move").addEventListener("click", () => {
@@ -419,10 +452,12 @@ function setupButtons(board) {
         board.eraseColorFromAll("selected_tile");
         board.eraseColorFromAll("move_to_tile");
         board.eraseColorFromAll("invalid_move_to_tile");
+        board.eraseColorFromAll("game_over_tile");
         board.nextMoves = [];
         board.invalidMoves = [];
         highlightUndoPly(firstPly, board);
         highlightUndoPly(secondPly, board);
+        board.gameOver = false; // can continue after undoing a checkmate or stalemate
         board.render();
     });
     document.getElementById("show_coords").addEventListener("click", (eventObj) => {
@@ -436,6 +471,9 @@ function setupButtons(board) {
         }
         board.render();
     });
+    document.getElementById("easy_AI").addEventListener("click", makeReset(board, "easy"));
+    document.getElementById("medium_AI").addEventListener("click", makeReset(board, "medium"));
+    document.getElementById("advanced_AI").addEventListener("click", makeReset(board, "advanced"));
 }
 
 let debugGetBoard;
