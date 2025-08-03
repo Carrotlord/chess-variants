@@ -71,6 +71,38 @@ class AbstractAI {
     }
 }
 
+class TranspositionTable {
+    constructor() {
+        this.table = {};
+        this.cacheHit = 0;
+        this.cacheMiss = 0;
+    }
+
+    boardToString(board) {
+        let arrays = board.grid.map(row => row.map(piece => String.fromCharCode(CHAR_CODE_a + piece)));
+        return arrays.map(rowArray => rowArray.join("")).join("");
+    }
+
+    cache(board, evaluation, originalMove, depth) {
+        let result = {val: evaluation, move: originalMove, depth: depth};
+        this.table[this.boardToString(board)] = result;
+        return result;
+    }
+
+    get(board, currentDepth) {
+        let key = this.boardToString(board);
+        if (this.table.hasOwnProperty(key)) {
+            let result = this.table[key];
+            if (result.depth >= currentDepth) {
+                this.cacheHit++;
+                return result;
+            }
+        }
+        this.cacheMiss++;
+        return null;
+    }
+}
+
 class RandomMoveAI extends AbstractAI {
     constructor(board) {
         super(board);
@@ -195,6 +227,7 @@ class IntermediateAI extends AbstractAI {
             [BISHOP]: 3, [KNIGHT]: 3, [PAWN]: 1,
             [EMPTY]: 0
         };
+        this.table = new TranspositionTable();
         this.defaultSearchDepth = 4;
     }
 
@@ -204,9 +237,13 @@ class IntermediateAI extends AbstractAI {
         return piece & color ? val : -val;
     }
 
-    evaluateBoard(aiColor) {
+    evaluateBoard(aiColor, depth) {
         if (isCheckmate(this.board, aiColor === WHITE ? BLACK : WHITE)) {
-            return 999999; // found mate in 1
+            // Found checkmate, adjust depth for mate in N
+            return 999999 - this.defaultSearchDepth + depth;
+        } else if (isCheckmate(this.board, aiColor)) {
+            // We're about to lose, adjust depth to avoid mate in N
+            return -999999 + this.defaultSearchDepth - depth;
         }
         let sum = 0;
         for (let row of this.board.grid) {
@@ -221,7 +258,11 @@ class IntermediateAI extends AbstractAI {
     negamax(depth, color, originalMove) {
         if (depth <= 0) {
             // The search is done
-            return {val: this.evaluateBoard(color), move: originalMove};
+            return {val: this.evaluateBoard(color, depth), move: originalMove, depth: depth};
+        }
+        let cached = this.table.get(this.board, depth);
+        if (cached !== null) {
+            return cached;
         }
         let bestValue = -9999999;
         let bestMoves = [];
@@ -249,24 +290,22 @@ class IntermediateAI extends AbstractAI {
         }
         if (bestMoves.length === 0) {
             // We don't have any moves
-            if (isCheckmate(this.board, color)) {
-                // If we're in checkmate, do anything to avoid it
-                return {val: -999999, move: originalMove};
-            } else if (isStalemate(this.board, color)) {
-                if (this.evaluateBoard(color) < 0) {
+            if (isStalemate(this.board, color)) {
+                if (this.evaluateBoard(color, depth) < 0) {
                     // If we have less material and we find a stalemate,
                     // we're happy to accept a draw as the outcome
-                    return {val: 999999, move: originalMove};
+                    return this.table.cache(this.board, 999999 - this.defaultSearchDepth + depth, originalMove, depth);
                 } else {
                     // Otherwise avoid the stalemate
-                    return {val: -999999, move: originalMove};
+                    return this.table.cache(this.board, -999999 + this.defaultSearchDepth - depth, originalMove, depth);
                 }
             } else {
-                return {val: this.evaluateBoard(color), move: originalMove};
+                // When we evaluate the board, checkmate is already considered
+                return this.table.cache(this.board, this.evaluateBoard(color, depth), originalMove, depth);
             }
         }
         let bestMove = this.chooseRandomElement(bestMoves);
-        return {val: bestValue, move: bestMove};
+        return this.table.cache(this.board, bestValue, bestMove, depth);
     }
 
     chooseMove() {
