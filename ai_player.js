@@ -76,6 +76,9 @@ class TranspositionTable {
         this.table = {};
         this.cacheHit = 0;
         this.cacheMiss = 0;
+        this.LOWER = 0;
+        this.UPPER = 1;
+        this.OK = 2;
     }
 
     boardToString(board) {
@@ -85,6 +88,18 @@ class TranspositionTable {
 
     cache(board, evaluation, originalMove, depth) {
         let result = {val: evaluation, move: originalMove, depth: depth};
+        this.table[this.boardToString(board)] = result;
+        return result;
+    }
+
+    cacheAlpha(board, evaluation, originalMove, depth, alpha, beta) {
+        let kind = this.OK;
+        if (evaluation <= alpha) {
+            kind = this.UPPER;
+        } else if (evaluation >= beta) {
+            kind = this.LOWER;
+        }
+        let result = {val: evaluation, move: originalMove, depth: depth, kind: kind};
         this.table[this.boardToString(board)] = result;
         return result;
     }
@@ -328,6 +343,7 @@ class AdvancedAI extends AbstractAI {
             [BISHOP]: 3, [KNIGHT]: 3, [PAWN]: 1,
             [EMPTY]: 0
         };
+        this.table = new TranspositionTable();
         this.defaultSearchDepth = 6;
     }
 
@@ -358,7 +374,18 @@ class AdvancedAI extends AbstractAI {
     alphaBetaNegamax(depth, color, originalMove, alpha, beta) {
         if (depth <= 0) {
             // The search is done
-            return {val: this.evaluateBoard(color, depth), move: originalMove};
+            return {val: this.evaluateBoard(color, depth), move: originalMove, kind: this.table.OK};
+        }
+        let cached = this.table.get(this.board, depth);
+        if (cached !== null) {
+            if (cached.kind === this.table.LOWER) {
+                alpha = Math.max(cached.val, alpha);
+            } else if (cached.kind === this.table.UPPER) {
+                beta = Math.min(cached.val, beta);
+            }
+            if (cached.kind === this.table.OK || alpha >= beta) {
+                return cached;
+            }
         }
         let bestValue = -9999999;
         let otherColor = color === WHITE ? BLACK : WHITE;
@@ -441,18 +468,21 @@ class AdvancedAI extends AbstractAI {
                 if (this.evaluateBoard(color, depth) < 0) {
                     // If we have less material and we find a stalemate,
                     // we're happy to accept a draw as the outcome
-                    return {val: 999999 - this.defaultSearchDepth + depth, move: originalMove};
+                    return this.table.cacheAlpha(this.board, 999999 - this.defaultSearchDepth + depth,
+                                                 originalMove, depth, alpha, beta);
                 } else {
                     // Otherwise avoid the stalemate
-                    return {val: -999999 + this.defaultSearchDepth - depth, move: originalMove};
+                    return this.table.cacheAlpha(this.board, -999999 + this.defaultSearchDepth - depth,
+                                                 originalMove, depth, alpha, beta);
                 }
             } else {
                 // When we evaluate the board, checkmate is already considered
-                return {val: this.evaluateBoard(color, depth), move: originalMove};
+                return this.table.cacheAlpha(this.board, this.evaluateBoard(color, depth),
+                                             originalMove, depth, alpha, beta);
             }
         }
         let bestMove = this.chooseRandomElement(bestMoves);
-        return {val: bestValue, move: bestMove};
+        return this.table.cacheAlpha(this.board, bestValue, bestMove, depth, alpha, beta);
     }
 
     chooseMove() {
