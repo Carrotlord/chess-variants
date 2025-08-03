@@ -2,7 +2,7 @@ body {
     background-color: white;
 }
 
-td, th {
+#chessboard td, #chessboard th {
     border: 1px black solid;
     border-collapse: collapse;
     height: 72px;
@@ -68,7 +68,7 @@ td, th {
     text-align: left;
     font-family: Calibri,Consolas,monospace;
     border: none;
-    width: 250px;
+    width: 300px;
 }
 
 #chatroom {
@@ -81,6 +81,7 @@ td, th {
 #chessboard {
     border: 1px black solid;
     border-collapse: collapse;
+    z-index: 1;
 }
 
 #top_level_container {
@@ -92,4 +93,63 @@ td, th {
     border: none;
     width: 650px;
     vertical-align: top;
+}
+
+#message_cover {
+    display: none;
+    background-color: #5f5f5f80;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2;
+}
+
+#message_container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 615px;
+}
+
+#message_window {
+    display: none;
+    border: 3px black solid;
+    border-radius: 15px;
+    padding: 15px;
+    outline: none;
+    font-size: 16px;
+    font-family: Calibri,Consolas,monospace;
+    background-color: #757575;
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    vertical-align: top;
+    white-space: nowrap;
+    text-align: center;
+}
+
+#message_window > button {
+    background-color: black;
+    color: white;
+    margin: 12px;
+    border: 3px outset gray;
+    border-radius: 10px;
+    padding: 8px;
+}
+
+#chatroom_holder > div > button {
+    background-color: black;
+    color: white;
+    margin: 2px;
+    border: 3px outset gray;
+    border-radius: 10px;
+    padding: 5px;
+    font-size: 15px;
+    font-family: Calibri,Consolas,monospace;
 }

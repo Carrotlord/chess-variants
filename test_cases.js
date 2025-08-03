@@ -24,3 +24,11 @@ function testCoordConversions() {
     console.log(results);
     console.log(numbers);
 }
+
+function testDialog() {
+    showDialog(
+        ["Message", "Line 1", "Line 2"],
+        "Left",  () => { console.log("One"); closeDialog(); },
+        "Right", () => { console.log("Two"); closeDialog(); }
+    );
+}

@@ -91,7 +91,7 @@ class Board {
         this.nextMoves = [];     // Valid moves
         this.invalidMoves = [];  // Moves that would put the king in check
         this.selectedPieceID = NO_SELECTION;
-        this.opponent = new AdvancedAI(this);
+        this.opponent = new IntermediateAI(this);
         this.cachedWhiteKingPositionID = toID("e1"); // The white king starts on "e1"
         this.cachedBlackKingPositionID = toID("e8"); // The black king starts on "e8"
         this.moveHistory = [];
@@ -281,9 +281,9 @@ class Board {
             let [iTarget, jTarget] = toCoords(this.selectedPieceID);
             let targetPiece = this.grid[iTarget][jTarget];
             if ((targetPiece & KIND) !== KING && detectKingInCheck(this, WHITE) !== null) {
-                window.alert("You can't move there because your king is currently in check.");
+                showDialog(["You can't move there since", "your king is currently in check."], "Ok", closeDialog);
             } else {
-                window.alert("You can't move there because your king would be in check after the move.");
+                showDialog(["You can't move there since your king", "would be in check after the move."], "Ok", closeDialog);
             }
             this.selectedPieceID = NO_SELECTION;
             this.resetMoves();

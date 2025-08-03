@@ -9,26 +9,30 @@
 <script src="move_generator.js" type="text/javascript"></script>
 <script src="check_detection.js" type="text/javascript"></script>
 <script src="ai_player.js" type="text/javascript"></script>
+<script src="dialog_message.js" type="text/javascript"></script>
 <script src="test_cases.js" type="text/javascript"></script>
 </head>
 
 <body onload="startUp();">
-<table id="top_level_container">
-<tr>
-<td id="chess_container">
-<table id="chessboard">
-</table>
-</td>
-<td id="chatroom_holder">
-<div>
-<button id="show_coords" type="button">Show coordinates</button>
-<button id="undo_move" type="button">Undo move</button>
-<hr>
-</div>
-<div id="chatroom"></div>
-</td>
-</tr>
-</table>
+  <table id="top_level_container">
+    <tr>
+      <td id="chess_container">
+        <div id="message_cover"></div>
+        <div id="message_container">
+          <table id="chessboard"></table>
+          <div id="message_window"></div>
+        </div>
+      </td>
+      <td id="chatroom_holder">
+        <div>
+          <button id="show_coords" type="button">Show coordinates</button>
+          <button id="undo_move" type="button">Undo move</button>
+          <hr>
+        </div>
+        <div id="chatroom"></div>
+      </td>
+    </tr>
+  </table>
 </body>
 
 </html>
