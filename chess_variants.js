@@ -91,7 +91,9 @@ class Board {
         this.nextMoves = [];     // Valid moves
         this.invalidMoves = [];  // Moves that would put the king in check
         this.selectedPieceID = NO_SELECTION;
-        if (aiName === "easy") {
+        if (aiName === "human") {
+            this.opponent = new HumanPlayer(this);
+        } else if (aiName === "easy") {
             this.opponent = new NoviceAI(this);
         } else if (aiName === "advanced") {
             this.opponent = new AdvancedAI(this);
@@ -101,6 +103,7 @@ class Board {
         this.cachedWhiteKingPositionID = toID("e1"); // The white king starts on "e1"
         this.cachedBlackKingPositionID = toID("e8"); // The black king starts on "e8"
         this.moveHistory = [];
+        this.whoseMove = WHITE;
         this.gameOver = false;
     }
 
@@ -148,9 +151,9 @@ class Board {
         this.resetMoves();
         let piece = this.grid[i][j];
         this.selectedPieceID = squareID;
-        let potentialMoves = getMoves(piece, i, j, WHITE, this.grid);
+        let potentialMoves = getMoves(piece, i, j, this.whoseMove, this.grid);
         for (let move of potentialMoves) {
-            if (isKingInCheckAfterMove(this, squareID, move, WHITE)) {
+            if (isKingInCheckAfterMove(this, squareID, move, this.whoseMove)) {
                 this.addColorLayer(move, "invalid_move_to_tile");
                 this.invalidMoves.push(move);
             } else {
@@ -253,6 +256,44 @@ class Board {
         this.gameOver = true;
     }
 
+    isOpponentPiece(piece) {
+        return piece !== EMPTY && this.whoseMove !== (piece & COLOR);
+    }
+
+    concludeGameWithAI() {
+        if (detectKingInCheck(this, this.whoseMove) === null) {
+            showDialog(
+                ["You have no legal moves,", "but are not in check. Stalemate!"],
+                "Start new game", this.startNewGame.bind(this),
+                "Back to game", this.backToGame.bind(this)
+            );
+        } else {
+            showDialog(
+                ["You have lost to checkmate.", "The opponent wins!"],
+                "Start new game", this.startNewGame.bind(this),
+                "Back to game", this.backToGame.bind(this)
+            );
+        }
+    }
+
+    concludeGameWithHuman(losingPlayer) {
+        if (detectKingInCheck(this, losingPlayer) === null) {
+            let loser = losingPlayer === WHITE ? "Player 1 (white)" : "Player 2 (black)";
+            showDialog(
+                [`${loser} has no legal moves,`, "but is not in check. Stalemate!"],
+                "Start new game", this.startNewGame.bind(this),
+                "Back to game", this.backToGame.bind(this)
+            );
+        } else {
+            let winner = losingPlayer !== WHITE ? "Player 1 (white)" : "Player 2 (black)";
+            showDialog(
+                ["Checkmate!", `${winner} wins!`],
+                "Start new game", this.startNewGame.bind(this),
+                "Back to game", this.backToGame.bind(this)
+            );
+        }
+    }
+
     toggleSquare(squareID) {
         if (this.gameOver) {
             this.eraseColorFromAll("game_over_tile");
@@ -282,23 +323,21 @@ class Board {
             }
             this.resetMoves(); // clear the UI
             this.render();
-            // The opponent will move afterwards
-            this.opponent.chooseMove();
-            this.render();
-            if (hasNoLegalMoves(this, WHITE)) {
-                if (detectKingInCheck(this, WHITE) === null) {
-                    showDialog(
-                        ["You have no legal moves,", "but are not in check. Stalemate!"],
-                        "Start new game", this.startNewGame.bind(this),
-                        "Back to game", this.backToGame.bind(this)
-                    );
-                } else {
-                    showDialog(
-                        ["You have lost to checkmate.", "The opponent wins!"],
-                        "Start new game", this.startNewGame.bind(this),
-                        "Back to game", this.backToGame.bind(this)
-                    );
+            if (this.opponent.difficulty === "human") {
+                let otherPlayer = this.whoseMove === WHITE ? BLACK : WHITE;
+                if (hasNoLegalMoves(this, otherPlayer)) {
+                    this.concludeGameWithHuman(otherPlayer);
                 }
+                this.whoseMove = otherPlayer;
+            } else {
+                // The AI opponent will move afterwards
+                setTimeout(() => {
+                    this.opponent.chooseMove();
+                    this.render();
+                    if (hasNoLegalMoves(this, this.whoseMove)) {
+                        this.concludeGameWithAI();
+                    }
+                }, 1);
             }
         } else if (this.invalidMoves.includes(squareID)) {
             let [iTarget, jTarget] = toCoords(this.selectedPieceID);
@@ -310,7 +349,7 @@ class Board {
             }
             this.selectedPieceID = NO_SELECTION;
             this.resetMoves();
-        } else if (piece & BLACK) {
+        } else if (this.isOpponentPiece(piece)) {
             this.addColorLayer(squareID, "opponents_selected_tile");
         } else {
             this.addColorLayer(squareID, "selected_tile");
@@ -476,6 +515,7 @@ function setupButtons(board) {
     document.getElementById("easy_AI").addEventListener("click", makeReset(board, "easy"));
     document.getElementById("medium_AI").addEventListener("click", makeReset(board, "medium"));
     document.getElementById("advanced_AI").addEventListener("click", makeReset(board, "advanced"));
+    document.getElementById("human").addEventListener("click", makeReset(board, "human"));
 }
 
 let debugGetBoard;

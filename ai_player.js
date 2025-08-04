@@ -3,7 +3,7 @@ function markOpponentMove(fromID, destID, board) {
     board.addColorLayer(destID, "opponent_moved_tile");
 }
 
-class AbstractAI {
+class AbstractPlayer {
     constructor(board) {
         this.board = board;
         this.difficulty = null;
@@ -115,7 +115,14 @@ class TranspositionTable {
     }
 }
 
-class RandomMoveAI extends AbstractAI {
+class HumanPlayer extends AbstractPlayer {
+    constructor(board) {
+        super(board);
+        this.difficulty = "human";
+    }
+}
+
+class RandomMoveAI extends AbstractPlayer {
     constructor(board) {
         super(board);
         this.difficulty = "random";
@@ -162,7 +169,7 @@ class RandomMoveAI extends AbstractAI {
 /** The novice AI uses simple heuristics to pick a move without attempting
  *  to traverse the game tree.
  */
-class NoviceAI extends AbstractAI {
+class NoviceAI extends AbstractPlayer {
     constructor(board) {
         super(board);
         this.pieceValues = {
@@ -233,7 +240,7 @@ class NoviceAI extends AbstractAI {
 }
 
 /** Searches the game tree with a certain default depth */
-class IntermediateAI extends AbstractAI {
+class IntermediateAI extends AbstractPlayer {
     constructor(board) {
         super(board);
         this.pieceValues = {
@@ -335,7 +342,7 @@ class IntermediateAI extends AbstractAI {
     }
 }
 
-class AdvancedAI extends AbstractAI {
+class AdvancedAI extends AbstractPlayer {
     constructor(board) {
         super(board);
         this.pieceValues = {
