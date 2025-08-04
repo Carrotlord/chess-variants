@@ -105,6 +105,7 @@ class Board {
         this.moveHistory = [];
         this.whoseMove = WHITE;
         this.gameOver = false;
+        this.spectating = false;
     }
 
     addColorLayer(squareID, colorString) {
@@ -295,7 +296,7 @@ class Board {
     }
 
     toggleSquare(squareID) {
-        if (this.gameOver) {
+        if (this.gameOver || this.spectating) {
             this.eraseColorFromAll("game_over_tile");
             this.addColorLayer(squareID, "game_over_tile");
             this.render();
@@ -477,6 +478,36 @@ function makeReset(board, aiDifficulty) {
     };
 }
 
+function aiVersusAI(board) {
+    // TODO: this should check for threefold repetition
+    let resetAll = makeReset(board, null);
+    resetAll();
+    let playerOne = new AdvancedAI(board);
+    let playerTwo = new IntermediateAI(board);
+    let playerOneMove;
+    let playerTwoMove;
+    playerOneMove = () => {
+        if (!board.spectating) {
+            return;
+        }
+        board.eraseColorFromAll("opponent_moved_tile");
+        playerOne.chooseMove(WHITE);
+        board.render();
+        setTimeout(playerTwoMove, 1);
+    };
+    playerTwoMove = () => {
+        if (!board.spectating) {
+            return;
+        }
+        board.eraseColorFromAll("opponent_moved_tile");
+        playerTwo.chooseMove(BLACK);
+        board.render();
+        setTimeout(playerOneMove, 1);
+    };
+    board.spectating = true;
+    playerOneMove();
+}
+
 /** Add event listeners for clickable buttons */
 function setupButtons(board) {
     document.getElementById("undo_move").addEventListener("click", () => {
@@ -516,6 +547,7 @@ function setupButtons(board) {
     document.getElementById("medium_AI").addEventListener("click", makeReset(board, "medium"));
     document.getElementById("advanced_AI").addEventListener("click", makeReset(board, "advanced"));
     document.getElementById("human").addEventListener("click", makeReset(board, "human"));
+    document.getElementById("both_AI").addEventListener("click", () => aiVersusAI(board));
 }
 
 let debugGetBoard;

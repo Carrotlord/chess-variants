@@ -10,6 +10,7 @@ class AbstractPlayer {
     }
 
     stalemate() {
+        this.board.spectating = false;
         this.board.render();
         showDialog(
             ["Opponent has no legal moves,", "but is not in check. Stalemate!"],
@@ -19,6 +20,7 @@ class AbstractPlayer {
     }
 
     resign() {
+        this.board.spectating = false;
         this.board.render();
         showDialog(
             ["Opponent lost to checkmate.", "You win!"],
@@ -128,12 +130,12 @@ class RandomMoveAI extends AbstractPlayer {
         this.difficulty = "random";
     }
 
-    getPartialLegalMoves(choices) {
+    getPartialLegalMoves(choices, aiColor) {
         while (choices.length > 0) {
             let chosen = this.removeRandomElement(choices);
             let chosenID = toID(chosen.slice(1));
-            let destinationIDs = getMoves(chosen[0], chosen[1], chosen[2], BLACK, this.board.grid).filter((move) =>
-                !isKingInCheckAfterMove(this.board, chosenID, move, BLACK));
+            let destinationIDs = getMoves(chosen[0], chosen[1], chosen[2], aiColor, this.board.grid).filter((move) =>
+                !isKingInCheckAfterMove(this.board, chosenID, move, aiColor));
             if (destinationIDs.length > 0) {
                 // We found a piece that can be moved
                 return [chosen, destinationIDs];
@@ -143,17 +145,17 @@ class RandomMoveAI extends AbstractPlayer {
         return null;
     }
 
-    chooseMove() {
+    chooseMove(aiColor = BLACK) {
         let choices = [];
         for (let i = 0; i < BOARD_HEIGHT; i++) {
             for (let j = 0; j < BOARD_WIDTH; j++) {
                 let piece = this.board.grid[i][j];
-                if (piece & BLACK) {
+                if (piece & aiColor) {
                     choices.push([piece, i, j]);
                 }
             }
         }
-        let partialMoves = this.getPartialLegalMoves(choices);
+        let partialMoves = this.getPartialLegalMoves(choices, aiColor);
         if (partialMoves === null) {
             return;
         }
@@ -207,16 +209,16 @@ class NoviceAI extends AbstractPlayer {
         return val;
     }
 
-    chooseMove() {
+    chooseMove(aiColor = BLACK) {
         let maxVal = -9999999;
         let bestMoves = [];
         for (let i = 0; i < BOARD_HEIGHT; i++) {
             for (let j = 0; j < BOARD_WIDTH; j++) {
                 let piece = this.board.grid[i][j];
-                if (piece & BLACK) {
+                if (piece & aiColor) {
                     let chosenID = toID([i, j]);
-                    let moves = getMoves(piece, i, j, BLACK, this.board.grid).filter((move) =>
-                        !isKingInCheckAfterMove(this.board, chosenID, move, BLACK));
+                    let moves = getMoves(piece, i, j, aiColor, this.board.grid).filter((move) =>
+                        !isKingInCheckAfterMove(this.board, chosenID, move, aiColor));
                     for (let move of moves) {
                         let currentVal = this.evaluateMove(chosenID, move);
                         if (currentVal > maxVal) {
@@ -330,8 +332,8 @@ class IntermediateAI extends AbstractPlayer {
         return this.table.cache(this.board, bestValue, bestMove, depth);
     }
 
-    chooseMove() {
-        let result = this.negamax(this.defaultSearchDepth, BLACK, null);
+    chooseMove(aiColor = BLACK) {
+        let result = this.negamax(this.defaultSearchDepth, aiColor, null);
         if (result.move !== null) {
             let [fromID, destID] = result.move;
             this.board.makeMove(fromID, destID);
@@ -493,8 +495,8 @@ class AdvancedAI extends AbstractPlayer {
         return this.table.cacheAlpha(this.board, bestValue, bestMove, depth, alpha, beta);
     }
 
-    chooseMove() {
-        let result = this.alphaBetaNegamax(this.defaultSearchDepth, BLACK, null, -9999999, 9999999);
+    chooseMove(aiColor = BLACK) {
+        let result = this.alphaBetaNegamax(this.defaultSearchDepth, aiColor, null, -9999999, 9999999);
         if (result.move !== null) {
             let [fromID, destID] = result.move;
             this.board.makeMove(fromID, destID);
