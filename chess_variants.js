@@ -106,6 +106,7 @@ class Board {
         this.whoseMove = WHITE;
         this.gameOver = false;
         this.spectating = false;
+        this.diagnostics = null;
     }
 
     addColorLayer(squareID, colorString) {
@@ -478,10 +479,30 @@ function makeReset(board, aiDifficulty) {
     };
 }
 
+class GameDiagnostics {
+    constructor() {
+        this.repetitionTable = {};
+    }
+    
+    detectRepetition(board, currentColor) {
+        let key = boardToString(board) + (currentColor === WHITE ? "W" : "B");
+        if (this.repetitionTable.hasOwnProperty(key)) {
+            if (this.repetitionTable[key] >= 2) {
+                return true; // threefold repetition detected
+            }
+            this.repetitionTable[key]++;
+        } else {
+            this.repetitionTable[key] = 1;
+        }
+        return false;
+    }
+}
+
 function aiVersusAI(board) {
     const MIN_TIME_PER_MOVE = 750; // milliseconds
     let resetAll = makeReset(board, null);
     resetAll();
+    board.diagnostics = new GameDiagnostics();
     let playerOne = new IntermediateAI(board);
     let playerTwo = new IntermediateAI(board);
     let functionFactory = (player, color) => () => {
@@ -492,6 +513,9 @@ function aiVersusAI(board) {
         board.eraseColorFromAll("opponent_moved_tile");
         player.chooseMove(color);
         board.render();
+        if (board.diagnostics.detectRepetition(board, color)) {
+            player.threefoldRepetition();
+        }
         let endTime = Date.now();
         let difference = endTime - startTime;
         if (difference >= MIN_TIME_PER_MOVE) {

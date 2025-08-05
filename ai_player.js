@@ -29,6 +29,16 @@ class AbstractPlayer {
         );
     }
 
+    threefoldRepetition() {
+        this.board.spectating = false;
+        this.board.render();
+        showDialog(
+            ["The game is a draw", "by threefold repetition."],
+            "Start new game", this.board.startNewGame.bind(this.board),
+            "Back to game", this.board.backToGame.bind(this.board)
+        );
+    }
+
     gameOver() {
         // Create a reset function and call it right now
         makeReset(this.board, this.difficulty)();
@@ -70,6 +80,11 @@ class AbstractPlayer {
     }
 }
 
+function boardToString(board) {
+    let arrays = board.grid.map(row => row.map(piece => String.fromCharCode(CHAR_CODE_a + piece)));
+    return arrays.map(rowArray => rowArray.join("")).join("");
+}
+
 class TranspositionTable {
     constructor() {
         this.table = {};
@@ -80,14 +95,9 @@ class TranspositionTable {
         this.OK = 2;
     }
 
-    boardToString(board) {
-        let arrays = board.grid.map(row => row.map(piece => String.fromCharCode(CHAR_CODE_a + piece)));
-        return arrays.map(rowArray => rowArray.join("")).join("");
-    }
-
     cache(board, evaluation, originalMove, depth) {
         let result = {val: evaluation, move: originalMove, depth: depth};
-        this.table[this.boardToString(board)] = result;
+        this.table[boardToString(board)] = result;
         return result;
     }
 
@@ -99,12 +109,12 @@ class TranspositionTable {
             kind = this.LOWER;
         }
         let result = {val: evaluation, move: originalMove, depth: depth, kind: kind};
-        this.table[this.boardToString(board)] = result;
+        this.table[boardToString(board)] = result;
         return result;
     }
 
     get(board, currentDepth) {
-        let key = this.boardToString(board);
+        let key = boardToString(board);
         if (this.table.hasOwnProperty(key)) {
             let result = this.table[key];
             if (result.depth >= currentDepth) {
