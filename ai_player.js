@@ -381,6 +381,13 @@ class AdvancedAI extends AbstractPlayer {
         }
         return sum;
     }
+    
+    newArrayTable() {
+        // 10 empty arrays are enough to hold material differences.
+        // The least difference is 0 and the max difference is 9.
+        // (index 0 through 9 inclusive)
+        return [[], [], [], [], [], [], [], [], [], []];
+    }
 
     /* Search algorithm is negamax with alpha-beta pruning and move ordering */
     alphaBetaNegamax(depth, color, originalMove, alpha, beta) {
@@ -403,12 +410,11 @@ class AdvancedAI extends AbstractPlayer {
         let otherColor = color === WHITE ? BLACK : WHITE;
         let bestMoves = [];
         let mateInOne = [];
-        let queenCaptures = [];
-        let rookCaptures = [];
-        let knightOrBishopCaptures = [];
-        let pawnCaptures = [];
+        let promotions = [];
+        let materialGain = this.newArrayTable();
         let checks = [];
         let others = [];
+        let materialLoss = this.newArrayTable();
         for (let i = 0; i < BOARD_HEIGHT; i++) {
             for (let j = 0; j < BOARD_WIDTH; j++) {
                 let piece = this.board.grid[i][j];
@@ -418,43 +424,41 @@ class AdvancedAI extends AbstractPlayer {
                         !isKingInCheckAfterMove(this.board, chosenID, move, color));
                     for (let move of moves) {
                         let [iPrime, jPrime] = toCoords(move);
-                        let capturedKind = this.board.grid[iPrime][jPrime] & KIND;
+                        let capturedPiece = this.board.grid[iPrime][jPrime];
+                        let capturedKind = capturedPiece & KIND;
                         let fullMove = [chosenID, move];
                         if (isCheckmateAfterMove(this.board, chosenID, move, otherColor)) {
                             mateInOne.push(fullMove);
-                            continue;
-                        }
-                        // We don't check the color of the captured
-                        // piece because it's not possible to move onto
-                        // one of your own pieces
-                        switch (capturedKind) {
-                            case QUEEN:
-                                queenCaptures.push(fullMove);
-                                break;
-                            case ROOK:
-                                rookCaptures.push(fullMove);
-                                break;
-                            case KNIGHT:
-                            case BISHOP:
-                                knightOrBishopCaptures.push(fullMove);
-                                break;
-                            case PAWN:
-                                pawnCaptures.push(fullMove);
-                                break;
-                            default:
-                                // If the other king is in check
-                                if (isKingInCheckAfterMove(this.board, chosenID, move, otherColor)) {
-                                    checks.push(fullMove);
-                                } else {
-                                    others.push(fullMove);
-                                }
-                                break;
+                        } else if ((piece === WHITE_PAWN && iPrime === 0) ||
+                                   (piece === BLACK_PAWN && iPrime === 7)) {
+                            promotions.push(fullMove);
+                        } else if (capturedKind !== EMPTY && capturedKind !== KING) {
+                            let ourKind = piece & KIND;
+                            let ourValue = ourKind === KING ? 0 : this.pieceValues[ourKind];
+                            let capturedValue = this.pieceValues[capturedKind];
+                            // Even if our piece is captured right afterwards,
+                            // do we gain material here?
+                            let gain = capturedValue - ourValue;
+                            if (gain > 0) {
+                                // Put the best moves at the front
+                                materialGain[9 - gain].push(fullMove);
+                            } else if (gain < 0) {
+                                // Put the worst moves at the end
+                                materialLoss[-gain].push(fullMove);
+                            } else {
+                                // Neutral move
+                                others.push(fullMove);
+                            }
+                        } else if (isKingInCheckAfterMove(this.board, chosenID, move, otherColor)) {
+                            checks.push(fullMove);
+                        } else {
+                            others.push(fullMove);
                         }
                     }
                 }
             }
         }
-        let orderedMoves = mateInOne.concat(queenCaptures, rookCaptures, knightOrBishopCaptures, pawnCaptures, checks, others);
+        let orderedMoves = mateInOne.concat(promotions, materialGain.flat(), checks, others, materialLoss.flat());
         for (let fullMove of orderedMoves) {
             let [chosenID, move] = fullMove;
             this.board.makeMove(chosenID, move);
