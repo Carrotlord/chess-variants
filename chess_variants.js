@@ -479,30 +479,43 @@ function makeReset(board, aiDifficulty) {
 }
 
 function aiVersusAI(board) {
-    // TODO: this should check for threefold repetition
+    const MIN_TIME_PER_MOVE = 750; // milliseconds
     let resetAll = makeReset(board, null);
     resetAll();
-    let playerOne = new AdvancedAI(board);
+    let playerOne = new IntermediateAI(board);
     let playerTwo = new IntermediateAI(board);
+    let functionFactory = (player, color) => () => {
+        let startTime = Date.now();
+        if (!board.spectating) {
+            return;
+        }
+        board.eraseColorFromAll("opponent_moved_tile");
+        player.chooseMove(color);
+        board.render();
+        let endTime = Date.now();
+        let difference = endTime - startTime;
+        if (difference >= MIN_TIME_PER_MOVE) {
+            return 1;
+        } else {
+            if (difference < 0) {
+                // Since the user can change the clock,
+                // the difference is not guaranteed to be positive
+                return 1 + MIN_TIME_PER_MOVE;
+            }
+            return 1 + MIN_TIME_PER_MOVE - difference;
+        }
+    };
+    let playerOneAction = functionFactory(playerOne, WHITE);
+    let playerTwoAction = functionFactory(playerTwo, BLACK);
     let playerOneMove;
     let playerTwoMove;
     playerOneMove = () => {
-        if (!board.spectating) {
-            return;
-        }
-        board.eraseColorFromAll("opponent_moved_tile");
-        playerOne.chooseMove(WHITE);
-        board.render();
-        setTimeout(playerTwoMove, 1);
+        let delay = playerOneAction();
+        setTimeout(playerTwoMove, delay);
     };
     playerTwoMove = () => {
-        if (!board.spectating) {
-            return;
-        }
-        board.eraseColorFromAll("opponent_moved_tile");
-        playerTwo.chooseMove(BLACK);
-        board.render();
-        setTimeout(playerOneMove, 1);
+        let delay = playerTwoAction();
+        setTimeout(playerOneMove, delay);
     };
     board.spectating = true;
     playerOneMove();
