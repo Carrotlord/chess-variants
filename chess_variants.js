@@ -483,7 +483,7 @@ class GameDiagnostics {
     constructor() {
         this.repetitionTable = {};
     }
-    
+
     detectRepetition(board, currentColor) {
         let key = boardToString(board) + (currentColor === WHITE ? "W" : "B");
         if (this.repetitionTable.hasOwnProperty(key)) {
@@ -535,11 +535,15 @@ function aiVersusAI(board) {
     let playerTwoMove;
     playerOneMove = () => {
         let delay = playerOneAction();
-        setTimeout(playerTwoMove, delay);
+        if (board.spectating) {
+            setTimeout(playerTwoMove, delay);
+        }
     };
     playerTwoMove = () => {
         let delay = playerTwoAction();
-        setTimeout(playerOneMove, delay);
+        if (board.spectating) {
+            setTimeout(playerOneMove, delay);
+        }
     };
     board.spectating = true;
     playerOneMove();

@@ -10,30 +10,22 @@ class AbstractPlayer {
     }
 
     stalemate() {
-        this.board.spectating = false;
-        this.board.render();
-        showDialog(
-            ["Opponent has no legal moves,", "but is not in check. Stalemate!"],
-            "Start new game", this.board.startNewGame.bind(this.board),
-            "Back to game", this.board.backToGame.bind(this.board)
-        );
+        this.gameOverMessage(["Opponent has no legal moves,", "but is not in check. Stalemate!"]);
     }
 
     resign() {
-        this.board.spectating = false;
-        this.board.render();
-        showDialog(
-            ["Opponent lost to checkmate.", "You win!"],
-            "Start new game", this.board.startNewGame.bind(this.board),
-            "Back to game", this.board.backToGame.bind(this.board)
-        );
+        this.gameOverMessage(["Opponent lost to checkmate.", "You win!"]);
     }
 
     threefoldRepetition() {
+        this.gameOverMessage(["The game is a draw", "by threefold repetition."]);
+    }
+
+    gameOverMessage(lines) {
         this.board.spectating = false;
         this.board.render();
         showDialog(
-            ["The game is a draw", "by threefold repetition."],
+            lines,
             "Start new game", this.board.startNewGame.bind(this.board),
             "Back to game", this.board.backToGame.bind(this.board)
         );
@@ -71,8 +63,8 @@ class AbstractPlayer {
         return arr[index];
     }
 
-    noLegalMoves() {
-        if (detectKingInCheck(this.board, BLACK) === null) {
+    noLegalMoves(aiColor) {
+        if (detectKingInCheck(this.board, aiColor) === null) {
             this.stalemate();  // We're not in check, but can't move anywhere
         } else {
             this.resign();     // It's checkmate
@@ -151,7 +143,7 @@ class RandomMoveAI extends AbstractPlayer {
                 return [chosen, destinationIDs];
             }
         }
-        this.noLegalMoves();
+        this.noLegalMoves(aiColor);
         return null;
     }
 
@@ -246,7 +238,7 @@ class NoviceAI extends AbstractPlayer {
             this.board.makeMove(fromID, destID);
             markOpponentMove(fromID, destID, this.board);
         } else {
-            this.noLegalMoves();
+            this.noLegalMoves(aiColor);
         }
     }
 }
@@ -349,7 +341,7 @@ class IntermediateAI extends AbstractPlayer {
             this.board.makeMove(fromID, destID);
             markOpponentMove(fromID, destID, this.board);
         } else {
-            this.noLegalMoves();
+            this.noLegalMoves(aiColor);
         }
     }
 }
@@ -512,7 +504,7 @@ class AdvancedAI extends AbstractPlayer {
             this.board.makeMove(fromID, destID);
             markOpponentMove(fromID, destID, this.board);
         } else {
-            this.noLegalMoves();
+            this.noLegalMoves(aiColor);
         }
     }
 }
