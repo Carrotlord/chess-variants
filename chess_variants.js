@@ -482,6 +482,8 @@ function makeReset(board, aiDifficulty) {
 class GameDiagnostics {
     constructor() {
         this.repetitionTable = {};
+        this.moveTimeForWhite = [];
+        this.moveTimeForBlack = [];
     }
 
     detectRepetition(board, currentColor) {
@@ -496,6 +498,29 @@ class GameDiagnostics {
         }
         return false;
     }
+
+    logMoveTimeForPlayer(color, time) {
+        if (color === WHITE) {
+            this.moveTimeForWhite.push(time);
+        } else {
+            this.moveTimeForBlack.push(time);
+        }
+    }
+
+    average(array) {
+        return array.reduce((a,b) => a+b, 0) / array.length;
+    }
+
+    reportMoveTime() {
+        let whiteTimeAverage = this.average(this.moveTimeForWhite);
+        let blackTimeAverage = this.average(this.moveTimeForBlack);
+        let whiteTimeMax = Math.max(...this.moveTimeForWhite);
+        let blackTimeMax = Math.max(...this.moveTimeForBlack);
+        let whiteTimeMin = Math.min(...this.moveTimeForWhite);
+        let blackTimeMin = Math.min(...this.moveTimeForBlack);
+        console.log(`Player white: ${whiteTimeAverage} average, ${whiteTimeMax} max, ${whiteTimeMin} min`);
+        console.log(`Player black: ${blackTimeAverage} average, ${blackTimeMax} max, ${blackTimeMin} min`);
+    }
 }
 
 function aiVersusAI(board) {
@@ -503,7 +528,7 @@ function aiVersusAI(board) {
     let resetAll = makeReset(board, null);
     resetAll();
     board.diagnostics = new GameDiagnostics();
-    let playerOne = new IntermediateAI(board);
+    let playerOne = new AdvancedAI(board);
     let playerTwo = new IntermediateAI(board);
     let functionFactory = (player, color) => () => {
         let startTime = Date.now();
@@ -518,16 +543,15 @@ function aiVersusAI(board) {
         }
         let endTime = Date.now();
         let difference = endTime - startTime;
+        board.diagnostics.logMoveTimeForPlayer(color, difference);
         if (difference >= MIN_TIME_PER_MOVE) {
             return 1;
-        } else {
-            if (difference < 0) {
-                // Since the user can change the clock,
-                // the difference is not guaranteed to be positive
-                return 1 + MIN_TIME_PER_MOVE;
-            }
-            return 1 + MIN_TIME_PER_MOVE - difference;
+        } else if (difference < 0) {
+            // Since the user can change the clock,
+            // the difference is not guaranteed to be positive
+            return 1 + MIN_TIME_PER_MOVE;
         }
+        return 1 + MIN_TIME_PER_MOVE - difference;
     };
     let playerOneAction = functionFactory(playerOne, WHITE);
     let playerTwoAction = functionFactory(playerTwo, BLACK);
