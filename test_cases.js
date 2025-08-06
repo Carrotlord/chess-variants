@@ -32,3 +32,16 @@ function testDialog() {
         "Right", () => { console.log("Two"); closeDialog(); }
     );
 }
+
+function testVisionBitBoards() {
+    let squares = ["e1", "a8", "h1", "e5"];
+    for (let square of squares) {
+        let id = anyToID(square);
+        console.log(`King at ${square}:`);
+        printBitBoard(makeKingVisionBitBoard(id));
+        console.log(`Knight at ${square}:`);
+        printBitBoard(makeKnightVisionBitBoard(id));
+        console.log(`Rook at ${square}:`);
+        printBitBoard(makeRookVisionBitBoard(id));
+    }
+}

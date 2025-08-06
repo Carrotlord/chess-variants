@@ -54,7 +54,7 @@ const NO_SELECTION = -1;
 function getMoves(piece, i, j, color, grid) {
     switch (piece & KIND) {
         case KING:
-            return filterMoveOntoOwnColor(getCachedKingMoves(i, j), color, grid).map(toID);
+            return filterMoveOntoOwnColor(COMPUTED_KING_MOVES[toID2(i, j)], color, grid).map(toID);
         case QUEEN:
             return getQueenMoves(i, j, grid).map(toID);
         case ROOK:
@@ -62,7 +62,7 @@ function getMoves(piece, i, j, color, grid) {
         case BISHOP:
             return getBishopMoves(i, j, grid).map(toID);
         case KNIGHT:
-            return filterMoveOntoOwnColor(getCachedKnightMoves(i, j), color, grid).map(toID);
+            return filterMoveOntoOwnColor(COMPUTED_KNIGHT_MOVES[toID2(i, j)], color, grid).map(toID);
         case PAWN:
             return getPawnMoves(i, j, grid).map(toID);
     }

@@ -11,11 +11,3 @@ function computeKingOrKnightMoves(getMovesCallback) {
 
 let COMPUTED_KNIGHT_MOVES = computeKingOrKnightMoves(getKnightMoves);
 let COMPUTED_KING_MOVES = computeKingOrKnightMoves(getKingMoves);
-
-function getCachedKnightMoves(i, j) {
-    return COMPUTED_KNIGHT_MOVES[toID2(i, j)];
-}
-
-function getCachedKingMoves(i, j, abbreviated = false) {
-    return COMPUTED_KING_MOVES[toID2(i, j)];
-}
