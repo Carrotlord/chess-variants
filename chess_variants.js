@@ -100,8 +100,8 @@ class Board {
         } else {
             this.opponent = new IntermediateAI(this);
         }
-        this.cachedWhiteKingPositionID = toID("e1"); // The white king starts on "e1"
-        this.cachedBlackKingPositionID = toID("e8"); // The black king starts on "e8"
+        this.cachedWhiteKingPositionID = anyToID("e1"); // The white king starts on "e1"
+        this.cachedBlackKingPositionID = anyToID("e8"); // The black king starts on "e8"
         this.moveHistory = [];
         this.whoseMove = WHITE;
         this.gameOver = false;
@@ -197,9 +197,9 @@ class Board {
         if ((piece & KIND) === KING) {
             // Save the new position of the king
             if (piece & BLACK) {
-                this.cachedBlackKingPositionID = toID([iPrime, jPrime]);
+                this.cachedBlackKingPositionID = toID2(iPrime, jPrime);
             } else {
-                this.cachedWhiteKingPositionID = toID([iPrime, jPrime]);
+                this.cachedWhiteKingPositionID = toID2(iPrime, jPrime);
             }
         }
         let captured = this.grid[iPrime][jPrime];
@@ -233,9 +233,9 @@ class Board {
         if ((piece & KIND) === KING) {
             // Restore the previous position of the king
             if (piece & BLACK) {
-                this.cachedBlackKingPositionID = toID([i, j]);
+                this.cachedBlackKingPositionID = toID2(i, j);
             } else {
-                this.cachedWhiteKingPositionID = toID([i, j]);
+                this.cachedWhiteKingPositionID = toID2(i, j);
             }
         }
         // Undo pawn promotion:
@@ -396,7 +396,7 @@ class Board {
  * ...
  * [7,0] [7,1] [7,2] ...
  */
-function toID(square) {
+function anyToID(square) {
     if (Array.isArray(square)) {
         return (BOARD_WIDTH * square[0]) + square[1];
     } else if (typeof(square) === "string") {
@@ -408,6 +408,14 @@ function toID(square) {
     }
 }
 
+function toID(square) {
+    return (square[0] << 3) + square[1];
+}
+
+function toID2(i, j) {
+    return (i << 3) + j;
+}
+
 function toAlgebraic(square) {
     if (Array.isArray(square)) {
         // Concat string with number
@@ -417,7 +425,7 @@ function toAlgebraic(square) {
     }
 }
 
-function toCoords(square) {
+function anyToCoords(square) {
     if (typeof(square) === "string") {
         let letter = square[0];
         let digit = square[1];
@@ -427,6 +435,10 @@ function toCoords(square) {
     } else if (typeof(square) === "number") {
         return [Math.floor(square/BOARD_WIDTH), square % BOARD_WIDTH]
     }
+}
+
+function toCoords(square) {
+    return [square >> 3, square & 0x7];
 }
 
 function initializeBoardColors(board, i, j, squareID) {
@@ -445,7 +457,7 @@ function initializeBoard() {
         for (let j = 0; j < BOARD_WIDTH; j++) {
             let cell = document.createElement("td");
             row.appendChild(cell);
-            let currentID = toID([i, j]);
+            let currentID = toID2(i, j);
             initializeBoardColors(board, i, j, currentID);
             cell.id = "s" + currentID;
             // We are capturing currentID, so it's important
@@ -472,7 +484,7 @@ function makeReset(board, aiDifficulty) {
         board.resetData(aiDifficulty);
         for (let i = 0; i < BOARD_HEIGHT; i++) {
             for (let j = 0; j < BOARD_WIDTH; j++) {
-                initializeBoardColors(board, i, j, toID([i, j]));
+                initializeBoardColors(board, i, j, toID2(i, j));
             }
         }
         board.render();

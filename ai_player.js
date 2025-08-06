@@ -80,8 +80,6 @@ function boardToString(board) {
 class TranspositionTable {
     constructor() {
         this.table = {};
-        this.cacheHit = 0;
-        this.cacheMiss = 0;
         this.LOWER = 0;
         this.UPPER = 1;
         this.OK = 2;
@@ -110,11 +108,9 @@ class TranspositionTable {
         if (this.table.hasOwnProperty(key)) {
             let result = this.table[key];
             if (result.depth >= currentDepth) {
-                this.cacheHit++;
                 return result;
             }
         }
-        this.cacheMiss++;
         return null;
     }
 }
@@ -218,7 +214,7 @@ class NoviceAI extends AbstractPlayer {
             for (let j = 0; j < BOARD_WIDTH; j++) {
                 let piece = this.board.grid[i][j];
                 if (piece & aiColor) {
-                    let chosenID = toID([i, j]);
+                    let chosenID = toID2(i, j);
                     let moves = getMoves(piece, i, j, aiColor, this.board.grid).filter((move) =>
                         !isKingInCheckAfterMove(this.board, chosenID, move, aiColor));
                     for (let move of moves) {
@@ -296,7 +292,7 @@ class IntermediateAI extends AbstractPlayer {
             for (let j = 0; j < BOARD_WIDTH; j++) {
                 let piece = this.board.grid[i][j];
                 if (piece & color) {
-                    let chosenID = toID([i, j]);
+                    let chosenID = toID2(i, j);
                     let moves = getMoves(piece, i, j, color, this.board.grid).filter((move) =>
                         !isKingInCheckAfterMove(this.board, chosenID, move, color));
                     for (let move of moves) {
@@ -419,7 +415,7 @@ class AdvancedAI extends AbstractPlayer {
             for (let j = 0; j < BOARD_WIDTH; j++) {
                 let piece = this.board.grid[i][j];
                 if (piece & color) {
-                    let chosenID = toID([i, j]);
+                    let chosenID = toID2(i, j);
                     let moves = getMoves(piece, i, j, color, this.board.grid).filter((move) =>
                         !isKingInCheckAfterMove(this.board, chosenID, move, color));
                     for (let move of moves) {

@@ -126,7 +126,7 @@ function hasNoLegalMoves(board, color) {
     for (let i = 0; i < BOARD_HEIGHT; i++) {
         for (let j = 0; j < BOARD_WIDTH; j++) {
             let piece = board.grid[i][j];
-            let origin = toID([i, j]);
+            let origin = toID2(i, j);
             if (piece & color) {
                 let moves = getMoves(piece, i, j, color, board.grid);
                 for (let move of moves) {
