@@ -30,7 +30,7 @@ function detectPieceInDanger(i, j, grid) {
         }
     }
     // Check for knight dangers
-    let possibleKnights = filterLegalMoves(getKnightMoves(i, j), color, grid);
+    let possibleKnights = filterMoveOntoOwnColor(getCachedKnightMoves(i, j), color, grid);
     for (let knightCoord of possibleKnights) {
         let [iPrime, jPrime] = knightCoord;
         let knight = grid[iPrime][jPrime];
@@ -72,7 +72,7 @@ function detectPieceInDanger(i, j, grid) {
     // Check for king dangers.
     // It's unlikely that the opponent's king is adjacent to this piece,
     // so check this part last.
-    let possibleKings = filterLegalMoves(getKingMoves(i, j), color, grid);
+    let possibleKings = filterMoveOntoOwnColor(getCachedKingMoves(i, j), color, grid);
     for (let kingCoord of possibleKings) {
         let [iPrime, jPrime] = kingCoord;
         let king = grid[iPrime][jPrime];
