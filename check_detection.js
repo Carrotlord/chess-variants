@@ -128,7 +128,7 @@ function hasNoLegalMoves(board, color) {
             let piece = board.grid[i][j];
             let origin = toID2(i, j);
             if (piece & color) {
-                let moves = getMoves(piece, i, j, color, board.grid);
+                let moves = loadMoves(piece, i, j, color, board);
                 for (let move of moves) {
                     if (!isKingInCheckAfterMove(board, origin, move, color)) {
                         return false;

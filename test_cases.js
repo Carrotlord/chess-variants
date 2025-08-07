@@ -37,11 +37,33 @@ function testVisionBitBoards() {
     let squares = ["e1", "a8", "h1", "e5"];
     for (let square of squares) {
         let id = anyToID(square);
+        let [i, j] = toCoords(id);
         console.log(`King at ${square}:`);
-        printBitBoard(makeKingVisionBitBoard(id));
+        let kingVision = makeKingVisionBitBoard(id);
+        printBitBoard(kingVision);
         console.log(`Knight at ${square}:`);
-        printBitBoard(makeKnightVisionBitBoard(id));
+        let knightVision = makeKnightVisionBitBoard(id);
+        printBitBoard(knightVision);
         console.log(`Rook at ${square}:`);
-        printBitBoard(makeRookVisionBitBoard(id));
+        let rookVision = makeRookVisionBitBoard(id);
+        printBitBoard(rookVision);
+        console.log(`Bishop at ${square}:`);
+        let bishopVision = makeBishopVisionBitBoard(id);
+        printBitBoard(bishopVision);
+        console.log(`White pawn at ${square}:`);
+        printBitBoard(makePawnVisionBitBoard(id, WHITE));
+        console.log(`Black pawn at ${square}:`);
+        printBitBoard(makePawnVisionBitBoard(id, BLACK));
+        console.log("White start position:");
+        printBitBoard(makeWhitePiecesStartingBitBoard());
+        console.log("Black start position:");
+        printBitBoard(makeBlackPiecesStartingBitBoard());
+
+        console.log(`Rook2 at ${square}:`);
+        clearBitAt(rookVision, i, j);
+        printBitBoard(rookVision);
+        console.log(`Bishop2 at ${square}:`);
+        clearBitAt(bishopVision, i, j);
+        printBitBoard(bishopVision);
     }
 }

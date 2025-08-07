@@ -51,7 +51,7 @@ const PIECE_SYMBOLS = {
 };
 const NO_SELECTION = -1;
 
-function getMoves(piece, i, j, color, grid) {
+function getMovesGenerated(piece, i, j, color, grid) {
     switch (piece & KIND) {
         case KING:
             return filterMoveOntoOwnColor(COMPUTED_KING_MOVES[toID2(i, j)], color, grid).map(toID);
@@ -107,6 +107,12 @@ class Board {
         this.gameOver = false;
         this.spectating = false;
         this.diagnostics = null;
+        this.moveCache = new Array(64);
+        for (let id = 0; id < this.moveCache.length; id++) {
+            this.moveCache[id] = [null, []];
+        }
+        this.whitePieceBitBoard = makeWhitePiecesStartingBitBoard();
+        this.blackPieceBitBoard = makeBlackPiecesStartingBitBoard();
     }
 
     addColorLayer(squareID, colorString) {
@@ -153,7 +159,7 @@ class Board {
         this.resetMoves();
         let piece = this.grid[i][j];
         this.selectedPieceID = squareID;
-        let potentialMoves = getMoves(piece, i, j, this.whoseMove, this.grid);
+        let potentialMoves = loadMoves(piece, i, j, this.whoseMove, this);
         for (let move of potentialMoves) {
             if (isKingInCheckAfterMove(this, squareID, move, this.whoseMove)) {
                 this.addColorLayer(move, "invalid_move_to_tile");
@@ -216,6 +222,23 @@ class Board {
         }
         this.grid[iPrime][jPrime] = piece; // move the piece
         this.grid[i][j] = EMPTY; // delete the old piece
+        // Change the bit boards
+        if (piece & WHITE) {
+            setBitAt(this.whitePieceBitBoard, iPrime, jPrime);
+            clearBitAt(this.whitePieceBitBoard, i, j);
+            if (captured !== EMPTY) {
+                clearBitAt(this.blackPieceBitBoard, iPrime, jPrime);
+            }
+        } else {
+            setBitAt(this.blackPieceBitBoard, iPrime, jPrime);
+            clearBitAt(this.blackPieceBitBoard, i, j);
+            if (captured !== EMPTY) {
+                clearBitAt(this.whitePieceBitBoard, iPrime, jPrime);
+            }
+        }
+        // Clear the moveCache only for the squares that changed
+        this.moveCache[origin] = [null, []];
+        this.moveCache[destination] = [null, []];
         this.moveHistory.push(this.encodeMove(
             piece, captured, origin, destination, false, false, promoted, false
         ));
@@ -244,6 +267,23 @@ class Board {
         }
         this.grid[iPrime][jPrime] = captured; // revive the captured piece
         this.grid[i][j] = piece; // take the moved piece and put it back
+        // Restore the bit boards
+        if (piece & WHITE) {
+            setBitAt(this.whitePieceBitBoard, i, j);
+            clearBitAt(this.whitePieceBitBoard, iPrime, jPrime);
+            if (captured !== EMPTY) {
+                setBitAt(this.blackPieceBitBoard, iPrime, jPrime);
+            }
+        } else {
+            setBitAt(this.blackPieceBitBoard, i, j);
+            clearBitAt(this.blackPieceBitBoard, iPrime, jPrime);
+            if (captured !== EMPTY) {
+                setBitAt(this.whitePieceBitBoard, iPrime, jPrime);
+            }
+        }
+        // Clear the moveCache only for the squares that changed
+        this.moveCache[start] = [null, []];
+        this.moveCache[end] = [null, []];
         // Return the squares we changed (for highlighting)
         return {piece: [i, j], capture: captured === EMPTY ? null : [iPrime, jPrime]}
     }

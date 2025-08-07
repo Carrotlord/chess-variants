@@ -18,6 +18,14 @@ function printBitBoard(bitBoard) {
     printHalfBitBoard(high);
 }
 
+function mask(bitBoard, bitBoard2) {
+    return [bitBoard[0] & bitBoard[0], bitBoard[1] & bitBoard[1]];
+}
+
+function combine(bitBoard, bitBoard2) {
+    return [bitBoard[0] | bitBoard[0], bitBoard[1] | bitBoard[1]];
+}
+
 function setBitAt(bitBoard, i, j) {
     if (outOfBounds(i, j)) {
         return;
@@ -65,6 +73,40 @@ function makeRookVisionBitBoard(rookID) {
     return bitBoard;
 }
 
+function makeBishopVisionBitBoard(bishopID) {
+    let [i, j] = toCoords(bishopID);
+    let bitBoard = [0, 0];
+    let iPrime = i;
+    let jPrime = j;
+    while (!outOfBounds(iPrime, jPrime)) {
+        setBitAt(bitBoard, iPrime, jPrime);
+        iPrime++;
+        jPrime++;
+    }
+    iPrime = i - 1;
+    jPrime = j - 1;
+    while (!outOfBounds(iPrime, jPrime)) {
+        setBitAt(bitBoard, iPrime, jPrime);
+        iPrime--;
+        jPrime--;
+    }
+    iPrime = i + 1;
+    jPrime = j - 1;
+    while (!outOfBounds(iPrime, jPrime)) {
+        setBitAt(bitBoard, iPrime, jPrime);
+        iPrime++;
+        jPrime--;
+    }
+    iPrime = i - 1;
+    jPrime = j + 1;
+    while (!outOfBounds(iPrime, jPrime)) {
+        setBitAt(bitBoard, iPrime, jPrime);
+        iPrime--;
+        jPrime++;
+    }
+    return bitBoard;
+}
+
 function makeKnightVisionBitBoard(knightID) {
     let moves = COMPUTED_KNIGHT_MOVES[knightID];
     let bitBoard = [0, 0];
@@ -82,3 +124,53 @@ function makeKingVisionBitBoard(kingID) {
     }
     return bitBoard;
 }
+
+function makePawnVisionBitBoard(pawnID, color) {
+    let [i, j] = toCoords(pawnID);
+    let bitBoard = [0, 0];
+    setBitAt(bitBoard, i, j);
+    // TODO: extend this for en passant
+    if (color === WHITE) {
+        setBitAt(bitBoard, i - 1, j);
+        setBitAt(bitBoard, i - 2, j);
+        setBitAt(bitBoard, i - 1, j - 1);
+        setBitAt(bitBoard, i - 1, j + 1);
+    } else {
+        setBitAt(bitBoard, i + 1, j);
+        setBitAt(bitBoard, i + 2, j);
+        setBitAt(bitBoard, i + 1, j - 1);
+        setBitAt(bitBoard, i + 1, j + 1);
+    }
+    return bitBoard;
+}
+
+function makeWhitePiecesStartingBitBoard() {
+    let bitBoard = [0, 0];
+    drawHorizontalLine(bitBoard, 6);
+    drawHorizontalLine(bitBoard, 7);
+    return bitBoard;
+}
+
+function makeBlackPiecesStartingBitBoard() {
+    let bitBoard = [0, 0];
+    drawHorizontalLine(bitBoard, 0);
+    drawHorizontalLine(bitBoard, 1);
+    return bitBoard;
+}
+
+function computeBitBoards(generate) {
+    let computed = [];
+    for (let id = 0; id < 64; id++) {
+        computed.push(generate(id));
+    }
+    return computed;
+}
+
+let PAWN_VISION_WHITE = computeBitBoards(pawnID => makePawnVisionBitBoard(pawnID, WHITE));
+let PAWN_VISION_BLACK = computeBitBoards(pawnID => makePawnVisionBitBoard(pawnID, BLACK));
+let KNIGHT_VISION = computeBitBoards(makeKnightVisionBitBoard);
+let BISHOP_VISION = computeBitBoards(makeBishopVisionBitBoard);
+let ROOK_VISION = computeBitBoards(makeRookVisionBitBoard);
+let QUEEN_VISION = computeBitBoards(queenID =>
+                   combine(makeBishopVisionBitBoard(queenID), makeRookVisionBitBoard(queenID)));
+let KING_VISION = computeBitBoards(makeKingVisionBitBoard);

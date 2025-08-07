@@ -132,7 +132,7 @@ class RandomMoveAI extends AbstractPlayer {
         while (choices.length > 0) {
             let chosen = this.removeRandomElement(choices);
             let chosenID = toID(chosen.slice(1));
-            let destinationIDs = getMoves(chosen[0], chosen[1], chosen[2], aiColor, this.board.grid).filter((move) =>
+            let destinationIDs = loadMoves(chosen[0], chosen[1], chosen[2], aiColor, this.board).filter((move) =>
                 !isKingInCheckAfterMove(this.board, chosenID, move, aiColor));
             if (destinationIDs.length > 0) {
                 // We found a piece that can be moved
@@ -215,7 +215,7 @@ class NoviceAI extends AbstractPlayer {
                 let piece = this.board.grid[i][j];
                 if (piece & aiColor) {
                     let chosenID = toID2(i, j);
-                    let moves = getMoves(piece, i, j, aiColor, this.board.grid).filter((move) =>
+                    let moves = loadMoves(piece, i, j, aiColor, this.board).filter((move) =>
                         !isKingInCheckAfterMove(this.board, chosenID, move, aiColor));
                     for (let move of moves) {
                         let currentVal = this.evaluateMove(chosenID, move);
@@ -293,7 +293,7 @@ class IntermediateAI extends AbstractPlayer {
                 let piece = this.board.grid[i][j];
                 if (piece & color) {
                     let chosenID = toID2(i, j);
-                    let moves = getMoves(piece, i, j, color, this.board.grid).filter((move) =>
+                    let moves = loadMoves(piece, i, j, color, this.board).filter((move) =>
                         !isKingInCheckAfterMove(this.board, chosenID, move, color));
                     for (let move of moves) {
                         this.board.makeMove(chosenID, move);
@@ -416,7 +416,7 @@ class AdvancedAI extends AbstractPlayer {
                 let piece = this.board.grid[i][j];
                 if (piece & color) {
                     let chosenID = toID2(i, j);
-                    let moves = getMoves(piece, i, j, color, this.board.grid).filter((move) =>
+                    let moves = loadMoves(piece, i, j, color, this.board).filter((move) =>
                         !isKingInCheckAfterMove(this.board, chosenID, move, color));
                     for (let move of moves) {
                         let [iPrime, jPrime] = toCoords(move);
