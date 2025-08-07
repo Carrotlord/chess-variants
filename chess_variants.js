@@ -580,7 +580,7 @@ function aiVersusAI(board) {
     let resetAll = makeReset(board, null);
     resetAll();
     board.diagnostics = new GameDiagnostics();
-    let playerOne = new AdvancedAI(board);
+    let playerOne = new IntermediateAI(board);
     let playerTwo = new IntermediateAI(board);
     let functionFactory = (player, color) => () => {
         let startTime = Date.now();
