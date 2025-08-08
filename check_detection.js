@@ -123,8 +123,22 @@ function isKingInCheckAfterMove(board, origin, destination, kingColor) {
 }
 
 function hasNoLegalMoves(board, color) {
+    let kingOrigin = color === WHITE ?
+                     board.cachedWhiteKingPositionID : board.cachedBlackKingPositionID;
+    let [iPrime, jPrime] = toCoords(kingOrigin);
+    let kingMoves = loadMoves(color === WHITE ? WHITE_KING : BLACK_KING, iPrime, jPrime, color, board);
+    // Move the king first, to see if we can get out of check
+    for (let kingMove of kingMoves) {
+        if (!isKingInCheckAfterMove(board, kingOrigin, kingMove, color)) {
+            return false;
+        }
+    }
     for (let i = 0; i < BOARD_HEIGHT; i++) {
         for (let j = 0; j < BOARD_WIDTH; j++) {
+            if (i === iPrime && j === jPrime) {
+                // We already processed king moves
+                continue;
+            }
             let piece = board.grid[i][j];
             let origin = toID2(i, j);
             if (piece & color) {
