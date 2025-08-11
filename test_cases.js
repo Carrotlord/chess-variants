@@ -67,3 +67,26 @@ function testVisionBitBoards() {
         printBitBoard(bishopVision);
     }
 }
+
+function testLineBetweenSquares() {
+    let horizontal = lineBetweenSquares(0, 0, 0, 5);
+    let horizontal2 = lineBetweenSquares(1, 2, 1, 6);
+    let vertical = lineBetweenSquares(0, 0, 5, 0);
+    let vertical2 = lineBetweenSquares(1, 2, 6, 2);
+    let diagonal = lineBetweenSquares(2, 2, 5, 5);
+    let diagonal2 = lineBetweenSquares(1, 6, 5, 2);
+    let diagonal3 = lineBetweenSquares(1, 6, 6, 1);
+    let diagonal4 = lineBetweenSquares(5, 5, 2, 2);
+    let diagonal5 = lineBetweenSquares(5, 2, 1, 6);
+    let diagonal6 = lineBetweenSquares(6, 1, 1, 6);
+    for (let line of [horizontal, horizontal2, vertical, vertical2, diagonal,
+                      diagonal2, diagonal3, diagonal4, diagonal5, diagonal6]) {
+        let bitBoard = [0, 0];
+        for (let id of line) {
+            let [i, j] = toCoords(id);
+            setBitAt(bitBoard, i, j);
+        }
+        printBitBoard(bitBoard);
+        console.log("========");
+    }
+}
