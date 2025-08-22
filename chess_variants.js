@@ -489,6 +489,19 @@ function initializeBoardColors(board, i, j, squareID) {
     }
 }
 
+function styleCorner(cell, i, j) {
+    const radius = "16px";
+    if (i === 0 && j === 0) {
+        cell.style.borderTopLeftRadius = radius;
+    } else if (i === 0 && j === BOARD_WIDTH - 1) {
+        cell.style.borderTopRightRadius = radius;
+    } else if (i === BOARD_HEIGHT - 1 && j === 0) {
+        cell.style.borderBottomLeftRadius = radius;
+    } else if (i === BOARD_HEIGHT - 1 && j === BOARD_WIDTH - 1) {
+        cell.style.borderBottomRightRadius = radius;
+    }
+}
+
 function initializeBoard() {
     let graphicalBoard = document.getElementById("chessboard");
     let board = new Board(graphicalBoard);
@@ -500,6 +513,7 @@ function initializeBoard() {
             let currentID = toID2(i, j);
             initializeBoardColors(board, i, j, currentID);
             cell.id = "s" + currentID;
+            styleCorner(cell, i, j);
             // We are capturing currentID, so it's important
             // that currentID is declared as 'let' and not 'var'
             // inside this for-loop block

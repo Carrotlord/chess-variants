@@ -3,8 +3,8 @@ body {
 }
 
 #chessboard td, #chessboard th {
-    border: 1px black solid;
-    border-collapse: collapse;
+    border: 1px gray solid;
+    border-collapse: separate;
     height: 72px;
     width: 72px;
     text-align: center;
@@ -79,8 +79,10 @@ body {
 }
 
 #chessboard {
-    border: 1px black solid;
-    border-collapse: collapse;
+    border: 2px black solid;
+    border-radius: 19px;
+    border-collapse: separate;
+    border-spacing: 0;
     z-index: 1;
 }
 
