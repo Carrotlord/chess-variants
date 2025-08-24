@@ -403,10 +403,22 @@ class Board {
     render() {
         for (let id = 0; id < 64; id++) {
             let cell = document.getElementById("s" + id);
-            cell.className = this.getColorLayer(id) + " piece";
+            let colorClass = this.getColorLayer(id);
+            cell.className = colorClass + " piece";
             let [i, j] = toCoords(id);
             let piece = this.grid[i][j];
             cell.innerHTML = PIECE_SYMBOLS[piece];
+            if (colorClass !== "blue_tile" && colorClass !== "white_tile") {
+                // Special cells need borders on adjacent cells
+                if (i > 0) {
+                    let upperCell = document.getElementById("s" + toID2(i - 1, j));
+                    upperCell.classList.add("border_bottom");
+                }
+                if (j > 0) {
+                    let leftCell = document.getElementById("s" + toID2(i, j - 1));
+                    leftCell.classList.add("border_right");
+                }
+            }
             if (this.showCoordinates) {
                 let algebraic = toAlgebraic(id);
                 let span = document.createElement("span");

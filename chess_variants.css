@@ -3,13 +3,14 @@ body {
 }
 
 #chessboard td, #chessboard th {
-    border: 1px gray solid;
-    border-collapse: separate;
+    box-sizing: border-box;
+    border: 2px transparent solid;
     height: 72px;
     width: 72px;
     text-align: center;
     /* display: table-cell; */
     vertical-align: middle;
+    padding: 0;
 }
 
 .piece {
@@ -23,24 +24,32 @@ body {
     user-select: none;
 }
 
-.move_to_tile {
+#chessboard td.border_bottom {
+    border-bottom-color: #505050;
+}
+
+#chessboard td.border_right {
+    border-right-color: #505050;
+}
+
+#chessboard td.move_to_tile {
     background-color: #ff8c00;
+    border-color: #505050;
 }
 
-.selected_tile {
+#chessboard td.selected_tile {
     background-color: #6a5acd;
+    border-color: #505050;
 }
 
-.opponents_selected_tile {
+#chessboard td.opponents_selected_tile {
     background-color: maroon;
+    border-color: #505050;
 }
 
-.game_over_tile {
+#chessboard td.game_over_tile, #chessboard td.invalid_move_to_tile {
     background-color: #808080;
-}
-
-.invalid_move_to_tile {
-    background-color: #808080;
+    border-color: #505050;
 }
 
 .blue_tile {
@@ -51,16 +60,19 @@ body {
     background-color: white;
 }
 
-.opponent_moved_tile {
+#chessboard td.opponent_moved_tile {
     background-color: green;
+    border-color: #505050;
 }
 
-.undo_tile {
+#chessboard td.undo_tile {
     background-color: #ffd700;
+    border-color: #505050;
 }
 
-.undo_capture {
+#chessboard td.undo_capture {
     background-color: #ff6347;
+    border-color: #505050;
 }
 
 #chatroom_holder {
@@ -80,9 +92,10 @@ body {
 
 #chessboard {
     border: 2px black solid;
-    border-radius: 19px;
-    border-collapse: separate;
-    border-spacing: 0;
+    border-radius: 16px;
+    border-collapse: collapse;
+    border-style: hidden;
+    box-shadow: 0 0 5px 2px black;
     z-index: 1;
 }
 
