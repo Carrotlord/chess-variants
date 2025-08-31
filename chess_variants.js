@@ -113,6 +113,15 @@ class Board {
         }
         this.whitePieceBitBoard = makeWhitePiecesStartingBitBoard();
         this.blackPieceBitBoard = makeBlackPiecesStartingBitBoard();
+        this.wallMap = {
+            "": "no_walls",
+            T: "ceiling", B: "floor", L: "left_wall", R: "right_wall",
+            TB: "ceiling_floor", RL: "both_walls",
+            TL: "upper_left_corner", RB: "lower_right_corner",
+            TR: "upper_right_corner", BL: "lower_left_corner",
+            RBL: "no_ceiling", TRL: "no_floor",
+            TRB: "no_left_wall", TBL: "no_right_wall", TRBL: "all_walls"
+        };
     }
 
     addColorLayer(squareID, colorString) {
@@ -399,25 +408,45 @@ class Board {
         }
         this.render();
     }
+    
+    isTileSpecial(i, j) {
+        if (outOfBounds(i, j)) {
+            return false;
+        }
+        let colorClass = this.getColorLayer(toID2(i, j));
+        return colorClass !== "blue_tile" && colorClass !== "white_tile";
+    }
+    
+    styleSpecialTile(cell, i, j) {
+        // Check neighboring cells to see if they
+        // are also special tiles
+        let walls = "";
+        if (!this.isTileSpecial(i - 1, j)) {
+            walls += "T";
+        }
+        if (!this.isTileSpecial(i, j + 1)) {
+            walls += "R";
+        }
+        if (!this.isTileSpecial(i + 1, j)) {
+            walls += "B";
+        }
+        if (!this.isTileSpecial(i, j - 1)) {
+            walls += "L";
+        }
+        if (this.wallMap.hasOwnProperty(walls)) {
+            cell.classList.add(this.wallMap[walls]);
+        }
+    }
 
     render() {
         for (let id = 0; id < 64; id++) {
             let cell = document.getElementById("s" + id);
-            let colorClass = this.getColorLayer(id);
-            cell.className = colorClass + " piece";
+            cell.className = this.getColorLayer(id) + " piece";
             let [i, j] = toCoords(id);
             let piece = this.grid[i][j];
             cell.innerHTML = PIECE_SYMBOLS[piece];
-            if (colorClass !== "blue_tile" && colorClass !== "white_tile") {
-                // Special cells need borders on adjacent cells
-                if (i > 0) {
-                    let upperCell = document.getElementById("s" + toID2(i - 1, j));
-                    upperCell.classList.add("border_bottom");
-                }
-                if (j > 0) {
-                    let leftCell = document.getElementById("s" + toID2(i, j - 1));
-                    leftCell.classList.add("border_right");
-                }
+            if (this.isTileSpecial(i, j)) {
+                this.styleSpecialTile(cell, i, j);
             }
             if (this.showCoordinates) {
                 let algebraic = toAlgebraic(id);

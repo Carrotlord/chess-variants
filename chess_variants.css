@@ -1,15 +1,14 @@
 body {
-    background-color: white;
+    background-color: #a9a9a9;
 }
 
 #chessboard td, #chessboard th {
-    box-sizing: border-box;
-    border: 2px transparent solid;
     height: 72px;
     width: 72px;
     text-align: center;
     /* display: table-cell; */
     vertical-align: middle;
+    position: relative;
     padding: 0;
 }
 
@@ -24,32 +23,270 @@ body {
     user-select: none;
 }
 
-#chessboard td.border_bottom {
-    border-bottom-color: #505050;
+#chessboard td.no_walls::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 1px #505050 solid;
+    box-sizing: border-box;
+    z-index: 2;
+    pointer-events: none;
 }
 
-#chessboard td.border_right {
-    border-right-color: #505050;
+#chessboard td.ceiling::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-top: 2px #505050 solid;
+    border-right: 1px #505050 solid;
+    border-bottom: 1px #505050 solid;
+    border-left: 1px #505050 solid;
+    box-sizing: border-box;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#chessboard td.floor::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-top: 1px #505050 solid;
+    border-right: 1px #505050 solid;
+    border-bottom: 2px #505050 solid;
+    border-left: 1px #505050 solid;
+    box-sizing: border-box;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#chessboard td.left_wall::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-top: 1px #505050 solid;
+    border-right: 1px #505050 solid;
+    border-bottom: 1px #505050 solid;
+    border-left: 2px #505050 solid;
+    box-sizing: border-box;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#chessboard td.right_wall::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-top: 1px #505050 solid;
+    border-right: 2px #505050 solid;
+    border-bottom: 1px #505050 solid;
+    border-left: 1px #505050 solid;
+    box-sizing: border-box;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#chessboard td.ceiling_floor::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-top: 2px #505050 solid;
+    border-right: 1px #505050 solid;
+    border-bottom: 2px #505050 solid;
+    border-left: 1px #505050 solid;
+    box-sizing: border-box;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#chessboard td.both_walls::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-top: 1px #505050 solid;
+    border-right: 2px #505050 solid;
+    border-bottom: 1px #505050 solid;
+    border-left: 2px #505050 solid;
+    box-sizing: border-box;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#chessboard td.no_ceiling::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-top: 1px #505050 solid;
+    border-right: 2px #505050 solid;
+    border-bottom: 2px #505050 solid;
+    border-left: 2px #505050 solid;
+    box-sizing: border-box;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#chessboard td.no_floor::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-top: 2px #505050 solid;
+    border-right: 2px #505050 solid;
+    border-bottom: 1px #505050 solid;
+    border-left: 2px #505050 solid;
+    box-sizing: border-box;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#chessboard td.all_walls::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 2px #505050 solid;
+    box-sizing: border-box;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#chessboard td.lower_left_corner::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-top: 1px #505050 solid;
+    border-right: 1px #505050 solid;
+    border-bottom: 2px #505050 solid;
+    border-left: 2px #505050 solid;
+    box-sizing: border-box;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#chessboard td.upper_right_corner::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-top: 2px #505050 solid;
+    border-right: 2px #505050 solid;
+    border-bottom: 1px #505050 solid;
+    border-left: 1px #505050 solid;
+    box-sizing: border-box;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#chessboard td.upper_left_corner::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-top: 2px #505050 solid;
+    border-right: 1px #505050 solid;
+    border-bottom: 1px #505050 solid;
+    border-left: 2px #505050 solid;
+    box-sizing: border-box;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#chessboard td.lower_right_corner::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-top: 1px #505050 solid;
+    border-right: 2px #505050 solid;
+    border-bottom: 2px #505050 solid;
+    border-left: 1px #505050 solid;
+    box-sizing: border-box;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#chessboard td.no_left_wall::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-top: 2px #505050 solid;
+    border-right: 2px #505050 solid;
+    border-bottom: 2px #505050 solid;
+    border-left: 1px #505050 solid;
+    box-sizing: border-box;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#chessboard td.no_right_wall::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-top: 2px #505050 solid;
+    border-right: 1px #505050 solid;
+    border-bottom: 2px #505050 solid;
+    border-left: 2px #505050 solid;
+    box-sizing: border-box;
+    z-index: 2;
+    pointer-events: none;
 }
 
 #chessboard td.move_to_tile {
     background-color: #ff8c00;
-    border-color: #505050;
 }
 
 #chessboard td.selected_tile {
     background-color: #6a5acd;
-    border-color: #505050;
 }
 
 #chessboard td.opponents_selected_tile {
     background-color: maroon;
-    border-color: #505050;
 }
 
 #chessboard td.game_over_tile, #chessboard td.invalid_move_to_tile {
     background-color: #808080;
-    border-color: #505050;
 }
 
 .blue_tile {
@@ -62,17 +299,14 @@ body {
 
 #chessboard td.opponent_moved_tile {
     background-color: green;
-    border-color: #505050;
 }
 
 #chessboard td.undo_tile {
     background-color: #ffd700;
-    border-color: #505050;
 }
 
 #chessboard td.undo_capture {
     background-color: #ff6347;
-    border-color: #505050;
 }
 
 #chatroom_holder {
