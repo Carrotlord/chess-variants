@@ -251,18 +251,20 @@ class Board {
             if (captured !== EMPTY) {
                 clearBitAt(this.blackPieceBitBoard, iPrime, jPrime);
             }
+            // Is the opposite player now in check?
+            if (!equalBoards(this.checkVision(BLACK), this.blackKingCheckVision)) {
+                this.checkingPieceForBlackIsValid = false;
+            }
         } else {
             setBitAt(this.blackPieceBitBoard, iPrime, jPrime);
             clearBitAt(this.blackPieceBitBoard, i, j);
             if (captured !== EMPTY) {
                 clearBitAt(this.whitePieceBitBoard, iPrime, jPrime);
             }
-        }
-        if (!equalBoards(this.checkVision(WHITE), this.whiteKingCheckVision)) {
-            this.checkingPieceForWhiteIsValid = false;
-        }
-        if (!equalBoards(this.checkVision(BLACK), this.blackKingCheckVision)) {
-            this.checkingPieceForBlackIsValid = false;
+            // Is the opposite player now in check?
+            if (!equalBoards(this.checkVision(WHITE), this.whiteKingCheckVision)) {
+                this.checkingPieceForWhiteIsValid = false;
+            }
         }
         // Clear the moveCache only for the squares that changed
         this.moveCache[origin] = [null, []];
@@ -302,18 +304,24 @@ class Board {
             if (captured !== EMPTY) {
                 setBitAt(this.blackPieceBitBoard, iPrime, jPrime);
             }
+            // See if we used to be in check.
+            // The other player can't be in check because otherwise
+            // we couldn't have made this move in the first place.
+            if (!equalBoards(this.checkVision(WHITE), this.whiteKingCheckVision)) {
+                this.checkingPieceForWhiteIsValid = false;
+            }
         } else {
             setBitAt(this.blackPieceBitBoard, i, j);
             clearBitAt(this.blackPieceBitBoard, iPrime, jPrime);
             if (captured !== EMPTY) {
                 setBitAt(this.whitePieceBitBoard, iPrime, jPrime);
             }
-        }
-        if (!equalBoards(this.checkVision(WHITE), this.whiteKingCheckVision)) {
-            this.checkingPieceForWhiteIsValid = false;
-        }
-        if (!equalBoards(this.checkVision(BLACK), this.blackKingCheckVision)) {
-            this.checkingPieceForBlackIsValid = false;
+            // See if we used to be in check.
+            // The other player can't be in check because otherwise
+            // we couldn't have made this move in the first place.
+            if (!equalBoards(this.checkVision(BLACK), this.blackKingCheckVision)) {
+                this.checkingPieceForBlackIsValid = false;
+            }
         }
         // Clear the moveCache only for the squares that changed
         this.moveCache[start] = [null, []];
