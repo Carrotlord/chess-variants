@@ -106,13 +106,27 @@ class Board {
         this.whoseMove = WHITE;
         this.gameOver = false;
         this.spectating = false;
-        this.diagnostics = null;
+        this.diagnostics = new GameDiagnostics();
         this.moveCache = new Array(64);
         for (let id = 0; id < this.moveCache.length; id++) {
             this.moveCache[id] = [null, []];
         }
         this.whitePieceBitBoard = makeWhitePiecesStartingBitBoard();
         this.blackPieceBitBoard = makeBlackPiecesStartingBitBoard();
+        // Neither king is in check at the start of the game
+        this.whiteKingCheckingPieceCoords = null;
+        this.blackKingCheckingPieceCoords = null;
+        this.checkingPieceForWhiteIsValid = true;
+        this.checkingPieceForBlackIsValid = true;
+        this.whiteKingCheckVision = this.checkVision(WHITE);
+        this.blackKingCheckVision = this.checkVision(BLACK);
+    }
+
+    checkVision(kingColor) {
+        return mask(
+            CHECK_VISION[kingColor === BLACK ? this.cachedBlackKingPositionID : this.cachedWhiteKingPositionID],
+            combine(this.whitePieceBitBoard, this.blackPieceBitBoard)
+        );
     }
 
     addColorLayer(squareID, colorString) {
@@ -244,6 +258,12 @@ class Board {
                 clearBitAt(this.whitePieceBitBoard, iPrime, jPrime);
             }
         }
+        if (!equalBoards(this.checkVision(WHITE), this.whiteKingCheckVision)) {
+            this.checkingPieceForWhiteIsValid = false;
+        }
+        if (!equalBoards(this.checkVision(BLACK), this.blackKingCheckVision)) {
+            this.checkingPieceForBlackIsValid = false;
+        }
         // Clear the moveCache only for the squares that changed
         this.moveCache[origin] = [null, []];
         this.moveCache[destination] = [null, []];
@@ -288,6 +308,12 @@ class Board {
             if (captured !== EMPTY) {
                 setBitAt(this.whitePieceBitBoard, iPrime, jPrime);
             }
+        }
+        if (!equalBoards(this.checkVision(WHITE), this.whiteKingCheckVision)) {
+            this.checkingPieceForWhiteIsValid = false;
+        }
+        if (!equalBoards(this.checkVision(BLACK), this.blackKingCheckVision)) {
+            this.checkingPieceForBlackIsValid = false;
         }
         // Clear the moveCache only for the squares that changed
         this.moveCache[start] = [null, []];
@@ -564,6 +590,10 @@ class GameDiagnostics {
         this.repetitionTable = {};
         this.moveTimeForWhite = [];
         this.moveTimeForBlack = [];
+        this.whiteCacheHit = 0;
+        this.blackCacheHit = 0;
+        this.whiteCacheMiss = 0;
+        this.blackCacheMiss = 0;
     }
 
     detectRepetition(board, currentColor) {
@@ -607,7 +637,6 @@ function aiVersusAI(board) {
     const MIN_TIME_PER_MOVE = 750; // milliseconds
     let resetAll = makeReset(board, null);
     resetAll();
-    board.diagnostics = new GameDiagnostics();
     let playerOne = new IntermediateAI(board);
     let playerTwo = new IntermediateAI(board);
     let functionFactory = (player, color) => () => {

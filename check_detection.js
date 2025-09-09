@@ -106,13 +106,29 @@ function reportSquare(i, j, grid) {
 }
 
 function detectKingInCheck(board, kingColor) {
-    let i, j;
+    // If our vision of anything that could put the king
+    // in check has not changed, return the cached result
     if (kingColor === BLACK) {
-        [i, j] = toCoords(board.cachedBlackKingPositionID);
+        if (board.checkingPieceForBlackIsValid) {
+            board.diagnostics.blackCacheHit++;
+            return board.blackKingCheckingPieceCoords;
+        }
+        let [i, j] = toCoords(board.cachedBlackKingPositionID);
+        board.blackKingCheckingPieceCoords = detectPieceInDanger(i, j, board.grid);
+        board.checkingPieceForBlackIsValid = true;
+        board.diagnostics.blackCacheMiss++;
+        return board.blackKingCheckingPieceCoords;
     } else {
-        [i, j] = toCoords(board.cachedWhiteKingPositionID);
+        if (board.checkingPieceForWhiteIsValid) {
+            board.diagnostics.whiteCacheHit++;
+            return board.whiteKingCheckingPieceCoords;
+        }
+        let [i, j] = toCoords(board.cachedWhiteKingPositionID);
+        board.whiteKingCheckingPieceCoords = detectPieceInDanger(i, j, board.grid);
+        board.checkingPieceForWhiteIsValid = true;
+        board.diagnostics.whiteCacheMiss++;
+        return board.whiteKingCheckingPieceCoords;
     }
-    return detectPieceInDanger(i, j, board.grid);
 }
 
 function isKingInCheckAfterMove(board, origin, destination, kingColor) {

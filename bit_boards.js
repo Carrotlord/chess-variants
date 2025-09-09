@@ -19,11 +19,19 @@ function printBitBoard(bitBoard) {
 }
 
 function mask(bitBoard, bitBoard2) {
-    return [bitBoard[0] & bitBoard[0], bitBoard[1] & bitBoard[1]];
+    return [bitBoard[0] & bitBoard2[0], bitBoard[1] & bitBoard2[1]];
 }
 
 function combine(bitBoard, bitBoard2) {
-    return [bitBoard[0] | bitBoard[0], bitBoard[1] | bitBoard[1]];
+    return [bitBoard[0] | bitBoard2[0], bitBoard[1] | bitBoard2[1]];
+}
+
+function combine3(bitBoard, bitBoard2, bitBoard3) {
+    return combine(bitBoard, combine(bitBoard2, bitBoard3));
+}
+
+function equalBoards(bitBoard, bitBoard2) {
+    return bitBoard[0] === bitBoard2[0] && bitBoard[1] === bitBoard2[1];
 }
 
 function setBitAt(bitBoard, i, j) {
@@ -172,5 +180,16 @@ let KNIGHT_VISION = computeBitBoards(makeKnightVisionBitBoard);
 let BISHOP_VISION = computeBitBoards(makeBishopVisionBitBoard);
 let ROOK_VISION = computeBitBoards(makeRookVisionBitBoard);
 let QUEEN_VISION = computeBitBoards(queenID =>
-                   combine(makeBishopVisionBitBoard(queenID), makeRookVisionBitBoard(queenID)));
+   combine(
+       makeBishopVisionBitBoard(queenID),
+       makeRookVisionBitBoard(queenID)
+   )
+);
 let KING_VISION = computeBitBoards(makeKingVisionBitBoard);
+let CHECK_VISION = computeBitBoards(kingID =>
+   combine3(
+       makeBishopVisionBitBoard(kingID),
+       makeRookVisionBitBoard(kingID),
+       makeKnightVisionBitBoard(kingID)
+   )
+);
