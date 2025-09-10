@@ -314,12 +314,46 @@ class Board {
         let [i, j] = toCoords(origin);
         let [iPrime, jPrime] = toCoords(destination);
         let piece = this.grid[i][j];
+        let castling = 0;
         if ((piece & KIND) === KING) {
+            const isBlack = piece & BLACK;
             // Save the new position of the king
-            if (piece & BLACK) {
+            if (isBlack) {
                 this.cachedBlackKingPositionID = toID2(iPrime, jPrime);
             } else {
                 this.cachedWhiteKingPositionID = toID2(iPrime, jPrime);
+            }
+            if (Math.abs(jPrime - j) === 2) {
+                // We are castling:
+                if (jPrime > j) {
+                    castling = NEAR_CASTLE;
+                    // Delete the rook and move it to the next place
+                    if (isBlack) {
+                        const [k, m] = BLACK_RIGHT_ROOK_START;
+                        this.grid[k][m] = EMPTY;
+                        const [n, p] = BLACK_RIGHT_ROOK_END;
+                        this.grid[n][p] = BLACK_ROOK;
+                    } else {
+                        const [k, m] = WHITE_RIGHT_ROOK_START;
+                        this.grid[k][m] = EMPTY;
+                        const [n, p] = WHITE_RIGHT_ROOK_END;
+                        this.grid[n][p] = WHITE_ROOK;
+                    }
+                } else {
+                    castling = FAR_CASTLE;
+                    // Delete the rook and move it to the next place
+                    if (isBlack) {
+                        const [k, m] = BLACK_LEFT_ROOK_START;
+                        this.grid[k][m] = EMPTY;
+                        const [n, p] = BLACK_LEFT_ROOK_END;
+                        this.grid[n][p] = BLACK_ROOK;
+                    } else {
+                        const [k, m] = WHITE_LEFT_ROOK_START;
+                        this.grid[k][m] = EMPTY;
+                        const [n, p] = WHITE_LEFT_ROOK_END;
+                        this.grid[n][p] = WHITE_ROOK;
+                    }
+                }
             }
         }
         let captured = this.grid[iPrime][jPrime];
@@ -362,7 +396,7 @@ class Board {
         this.moveCache[origin] = [null, []];
         this.moveCache[destination] = [null, []];
         this.moveHistory.push(this.encodeMove(
-            piece, captured, origin, destination, false, false, promoted, false
+            piece, captured, origin, destination, castling === FAR_CASTLE, castling === NEAR_CASTLE, promoted, false
         ));
     }
 
@@ -376,11 +410,39 @@ class Board {
         let [i, j] = toCoords(start);
         let [iPrime, jPrime] = toCoords(end);
         if ((piece & KIND) === KING) {
+            const isBlack = piece & BLACK;
             // Restore the previous position of the king
-            if (piece & BLACK) {
+            if (isBlack) {
                 this.cachedBlackKingPositionID = toID2(i, j);
             } else {
                 this.cachedWhiteKingPositionID = toID2(i, j);
+            }
+            if (nearCastle) {
+                // Delete the rook and move it to the previous place
+                if (isBlack) {
+                    const [k, m] = BLACK_RIGHT_ROOK_END;
+                    this.grid[k][m] = EMPTY;
+                    const [n, p] = BLACK_RIGHT_ROOK_START;
+                    this.grid[n][p] = BLACK_ROOK;
+                } else {
+                    const [k, m] = WHITE_RIGHT_ROOK_END;
+                    this.grid[k][m] = EMPTY;
+                    const [n, p] = WHITE_RIGHT_ROOK_START;
+                    this.grid[n][p] = WHITE_ROOK;
+                }
+            } else if (farCastle) {
+                // Delete the rook and move it to the previous place
+                if (isBlack) {
+                    const [k, m] = BLACK_LEFT_ROOK_END;
+                    this.grid[k][m] = EMPTY;
+                    const [n, p] = BLACK_LEFT_ROOK_START;
+                    this.grid[n][p] = BLACK_ROOK;
+                } else {
+                    const [k, m] = WHITE_LEFT_ROOK_END;
+                    this.grid[k][m] = EMPTY;
+                    const [n, p] = WHITE_LEFT_ROOK_START;
+                    this.grid[n][p] = WHITE_ROOK;
+                }
             }
         }
         // Undo pawn promotion:

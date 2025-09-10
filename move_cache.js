@@ -52,6 +52,15 @@ const BLACK_FAR_CASTLE_OBJ = {
     kingVerifyArray: BLACK_FAR_CASTLE_VERIFY,
     rookVerify: BLACK_FAR_CASTLE_ROOK_VERIFY
 };
+const WHITE_LEFT_ROOK_START = anyToCoords("a1");
+const WHITE_RIGHT_ROOK_START = anyToCoords("h1");
+const BLACK_LEFT_ROOK_START = anyToCoords("a8");
+const BLACK_RIGHT_ROOK_START = anyToCoords("h8");
+
+const WHITE_LEFT_ROOK_END = anyToCoords("d1");
+const WHITE_RIGHT_ROOK_END = anyToCoords("f1");
+const BLACK_LEFT_ROOK_END = anyToCoords("d8");
+const BLACK_RIGHT_ROOK_END = anyToCoords("f8");
 
 function loadMoves(piece, i, j, color, board) {
     let id = toID2(i, j);
