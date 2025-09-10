@@ -108,21 +108,25 @@ function reportSquare(i, j, grid) {
 function detectKingInCheck(board, kingColor) {
     // If our vision of anything that could put the king
     // in check has not changed, return the cached result
+
+    // TODO: there appears to be an issue with the cache
+    // due to the addition of castling, so for now,
+    // some parts of this method are commented out
     if (kingColor === BLACK) {
-        if (board.checkingPieceForBlackIsValid) {
+        /*if (board.checkingPieceForBlackIsValid) {
             board.diagnostics.blackCacheHit++;
             return board.blackKingCheckingPieceCoords;
-        }
+        }*/
         let [i, j] = toCoords(board.cachedBlackKingPositionID);
         board.blackKingCheckingPieceCoords = detectPieceInDanger(i, j, board.grid);
         board.checkingPieceForBlackIsValid = true;
         board.diagnostics.blackCacheMiss++;
         return board.blackKingCheckingPieceCoords;
     } else {
-        if (board.checkingPieceForWhiteIsValid) {
+        /*if (board.checkingPieceForWhiteIsValid) {
             board.diagnostics.whiteCacheHit++;
             return board.whiteKingCheckingPieceCoords;
-        }
+        }*/
         let [i, j] = toCoords(board.cachedWhiteKingPositionID);
         board.whiteKingCheckingPieceCoords = detectPieceInDanger(i, j, board.grid);
         board.checkingPieceForWhiteIsValid = true;

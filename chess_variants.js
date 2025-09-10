@@ -20,7 +20,7 @@ const BLACK_FAR_CASTLE = 1 << 29;  // Far castle is available for black
 const SHIFT_AMOUNT = {
     [MOVING_PIECE]: 0, [CAPTURED_PIECE]: 5, [START_POSITION]: 10,
     [END_POSITION]: 16, [FAR_CASTLE]: 22, [NEAR_CASTLE]: 23,
-    [PAWN_PROMOTE]: 24, [EN_PASSANT]: 25
+    [PAWN_PROMOTE]: 24, [EN_PASSANT]: 25, [CASTLING_STATE]: 26
 };
 
 const EMPTY = 0;
@@ -205,9 +205,12 @@ class Board {
             }
         }
     }
-    
+
     isKingInCheck(kingColor) {
-        if (kingColor === BLACK) {
+        // TODO: there appears to be an issue with the cache
+        // due to the addition of castling, so for now,
+        // only the last statement in this method is uncommented
+        /*if (kingColor === BLACK) {
             if (this.checkingPieceForBlackIsValid) {
                 this.diagnostics.blackCacheHit++;
                 // Is there some piece causing check?
@@ -217,7 +220,7 @@ class Board {
             this.diagnostics.whiteCacheHit++;
             // Is there some piece causing check?
             return this.whiteKingCheckingPieceCoords !== null;
-        }
+        }*/
         // The cache is not valid, so use the slower method:
         return detectKingInCheck(this, kingColor) !== null;
     }
@@ -284,8 +287,44 @@ class Board {
         // Castling is ok:
         return true;
     }
+    
+    encodeCastlingState() {
+        let state = 0;
+        if (this.whiteKingCanCastleNear) {
+            state |= WHITE_NEAR_CASTLE;
+        }
+        if (this.whiteKingCanCastleFar) {
+            state |= WHITE_FAR_CASTLE;
+        }
+        if (this.blackKingCanCastleNear) {
+            state |= BLACK_NEAR_CASTLE;
+        }
+        if (this.blackKingCanCastleFar) {
+            state |= BLACK_FAR_CASTLE;
+        }
+        return state;
+    }
+    
+    decodeCastlingState(prevState) {
+        this.whiteKingCanCastleNear = false;
+        this.whiteKingCanCastleFar = false;
+        this.blackKingCanCastleNear = false;
+        this.blackKingCanCastleFar = false;
+        if (prevState & WHITE_NEAR_CASTLE) {
+            this.whiteKingCanCastleNear = true;
+        }
+        if (prevState & WHITE_FAR_CASTLE) {
+            this.whiteKingCanCastleFar = true;
+        }
+        if (prevState & BLACK_NEAR_CASTLE) {
+            this.blackKingCanCastleNear = true;
+        }
+        if (prevState & BLACK_FAR_CASTLE) {
+            this.blackKingCanCastleFar = true;
+        }
+    }
 
-    encodeMove(piece, captured, start, end, farCastle, nearCastle, promote, enPassant) {
+    encodeMove(piece, captured, start, end, farCastle, nearCastle, promote, enPassant, castlingState) {
         let savedMove = piece;
         savedMove |= captured << SHIFT_AMOUNT[CAPTURED_PIECE];
         savedMove |= start << SHIFT_AMOUNT[START_POSITION];
@@ -294,6 +333,7 @@ class Board {
         savedMove |= (nearCastle ? 1 : 0) << SHIFT_AMOUNT[NEAR_CASTLE];
         savedMove |= (promote ? 1 : 0) << SHIFT_AMOUNT[PAWN_PROMOTE];
         savedMove |= (enPassant ? 1 : 0) << SHIFT_AMOUNT[EN_PASSANT];
+        savedMove |= castlingState;
         return savedMove;
     }
 
@@ -306,11 +346,13 @@ class Board {
             Boolean(savedMove & FAR_CASTLE),
             Boolean(savedMove & NEAR_CASTLE),
             Boolean(savedMove & PAWN_PROMOTE),
-            Boolean(savedMove & EN_PASSANT)
+            Boolean(savedMove & EN_PASSANT),
+            savedMove & CASTLING_STATE
         ];
     }
 
     makeMove(origin, destination) {
+        let initialCastlingState = this.encodeCastlingState();
         let [i, j] = toCoords(origin);
         let [iPrime, jPrime] = toCoords(destination);
         let piece = this.grid[i][j];
@@ -320,8 +362,14 @@ class Board {
             // Save the new position of the king
             if (isBlack) {
                 this.cachedBlackKingPositionID = toID2(iPrime, jPrime);
+                // Any king move, including castling, means we can't castle anymore
+                this.blackKingCanCastleNear = false;
+                this.blackKingCanCastleFar = false;
             } else {
                 this.cachedWhiteKingPositionID = toID2(iPrime, jPrime);
+                // Any king move, including castling, means we can't castle anymore
+                this.whiteKingCanCastleNear = false;
+                this.whiteKingCanCastleFar = false;
             }
             if (Math.abs(jPrime - j) === 2) {
                 // We are castling:
@@ -396,7 +444,8 @@ class Board {
         this.moveCache[origin] = [null, []];
         this.moveCache[destination] = [null, []];
         this.moveHistory.push(this.encodeMove(
-            piece, captured, origin, destination, castling === FAR_CASTLE, castling === NEAR_CASTLE, promoted, false
+            piece, captured, origin, destination, castling === FAR_CASTLE, castling === NEAR_CASTLE,
+            promoted, false, initialCastlingState
         ));
     }
 
@@ -405,7 +454,8 @@ class Board {
             return null;
         }
         let lastMove = this.moveHistory.pop();
-        let [piece, captured, start, end, farCastle, nearCastle, promote, enPassant] = this.decodeMove(lastMove);
+        let [piece, captured, start, end, farCastle, nearCastle, promote, enPassant, castlingState] = this.decodeMove(lastMove);
+        this.decodeCastlingState(castlingState);
 
         let [i, j] = toCoords(start);
         let [iPrime, jPrime] = toCoords(end);
