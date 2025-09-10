@@ -224,7 +224,7 @@ class Board {
         // The cache is not valid, so use the slower method:
         return detectKingInCheck(this, kingColor) !== null;
     }
-    
+
     getCastlingMoves(kingColor) {
         if (this.isKingInCheck(kingColor)) {
             // We can't castle if we're in check
@@ -251,7 +251,7 @@ class Board {
         }
         return [];
     }
-    
+
     verifyCastling(castlingObj) {
         // Just because castling is available, it does not
         // mean we can actually castle on the current turn
@@ -266,7 +266,7 @@ class Board {
             }
         }
         const kingPosition = kingColor === WHITE ? this.cachedWhiteKingPositionID : this.cachedBlackKingPositionID;
-        
+
         // Are these squares empty?
         for (const move of kingVerifyArray) {
             const [i, j] = toCoords(move);
@@ -275,7 +275,7 @@ class Board {
                 return false;
             }
         }
-        
+
         // Since checking for checks takes a long time,
         // do this loop after we confirmed the squares are empty:
         for (const move of kingVerifyArray) {
@@ -287,7 +287,7 @@ class Board {
         // Castling is ok:
         return true;
     }
-    
+
     encodeCastlingState() {
         let state = 0;
         if (this.whiteKingCanCastleNear) {
@@ -304,7 +304,7 @@ class Board {
         }
         return state;
     }
-    
+
     decodeCastlingState(prevState) {
         this.whiteKingCanCastleNear = false;
         this.whiteKingCanCastleFar = false;
@@ -349,6 +349,23 @@ class Board {
             Boolean(savedMove & EN_PASSANT),
             savedMove & CASTLING_STATE
         ];
+    }
+
+    invalidateCastlingForRook(rookID) {
+        switch (rookID) {
+            case WHITE_LEFT_ROOK_START_ID:
+                this.whiteKingCanCastleFar = false;
+                break;
+            case WHITE_RIGHT_ROOK_START_ID:
+                this.whiteKingCanCastleNear = false;
+                break;
+            case BLACK_LEFT_ROOK_START_ID:
+                this.blackKingCanCastleFar = false;
+                break;
+            case BLACK_RIGHT_ROOK_START_ID:
+                this.blackKingCanCastleNear = false;
+                break;
+        }
     }
 
     makeMove(origin, destination) {
@@ -403,8 +420,17 @@ class Board {
                     }
                 }
             }
+        } else if ((piece & KIND) === ROOK) {
+            // If we moved a rook from its starting square,
+            // we can't castle on that side anymore
+            this.invalidateCastlingForRook(origin);
         }
         let captured = this.grid[iPrime][jPrime];
+        if ((captured & KIND) === ROOK) {
+            // If a rook is captured on its starting square,
+            // we can't castle on that side anymore
+            this.invalidateCastlingForRook(destination);
+        }
         // Promote pawns:
         let promoted = false;
         if (iPrime === 0 && piece === WHITE_PAWN) {
