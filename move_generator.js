@@ -11,7 +11,7 @@ function getKnightMoves(i, j) {
             [i + 2, j + 1], [i + 1, j + 2], [i - 1, j + 2], [i - 2, j + 1]];
 }
 
-function getKingMoves(i, j, abbreviated = false) {
+function getKingMoves(i, j) {
     return [[i - 1, j - 1], [i - 1, j + 1], [i + 1, j - 1], [i + 1, j + 1],
             [i, j + 1], [i + 1, j], [i, j - 1], [i - 1, j]];
 }

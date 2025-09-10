@@ -11,6 +11,47 @@ function computeKingOrKnightMoves(getMovesCallback) {
 
 let COMPUTED_KNIGHT_MOVES = computeKingOrKnightMoves(getKnightMoves);
 let COMPUTED_KING_MOVES = computeKingOrKnightMoves(getKingMoves);
+// The king moves for castling are always the same.
+// We declare arrays here so that we don't need to allocate every time
+// we get a castling move.
+const WHITE_NEAR_CASTLE_COORDS = [anyToID("g1")];
+const WHITE_FAR_CASTLE_COORDS = [anyToID("c1")];
+const BLACK_NEAR_CASTLE_COORDS = [anyToID("g8")];
+const BLACK_FAR_CASTLE_COORDS = [anyToID("c8")];
+const WHITE_BOTH_CASTLE_COORDS = WHITE_NEAR_CASTLE_COORDS.concat(WHITE_FAR_CASTLE_COORDS);
+const BLACK_BOTH_CASTLE_COORDS = BLACK_NEAR_CASTLE_COORDS.concat(BLACK_FAR_CASTLE_COORDS);
+
+// These squares must be verified to make sure they contain no pieces
+// and that the king does not move into or through check when castling.
+// Note that the king on its own square already has a condition for check,
+// so the king's own square is not included here:
+const WHITE_NEAR_CASTLE_VERIFY = ["f1", "g1"].map(anyToID);
+const WHITE_FAR_CASTLE_VERIFY = ["c1", "d1"].map(anyToID);
+const BLACK_NEAR_CASTLE_VERIFY = ["f8", "g8"].map(anyToID);
+const BLACK_FAR_CASTLE_VERIFY = ["c8", "d8"].map(anyToID);
+// Also, we can't castle if something is blocking the rook:
+const WHITE_FAR_CASTLE_ROOK_VERIFY = anyToID("b1");
+const BLACK_FAR_CASTLE_ROOK_VERIFY = anyToID("b8");
+const WHITE_NEAR_CASTLE_OBJ = {
+    kingColor: WHITE,
+    kingVerifyArray: WHITE_NEAR_CASTLE_VERIFY,
+    rookVerify: -1
+};
+const BLACK_NEAR_CASTLE_OBJ = {
+    kingColor: BLACK,
+    kingVerifyArray: BLACK_NEAR_CASTLE_VERIFY,
+    rookVerify: -1
+};
+const WHITE_FAR_CASTLE_OBJ = {
+    kingColor: WHITE,
+    kingVerifyArray: WHITE_FAR_CASTLE_VERIFY,
+    rookVerify: WHITE_FAR_CASTLE_ROOK_VERIFY
+};
+const BLACK_FAR_CASTLE_OBJ = {
+    kingColor: BLACK,
+    kingVerifyArray: BLACK_FAR_CASTLE_VERIFY,
+    rookVerify: BLACK_FAR_CASTLE_ROOK_VERIFY
+};
 
 function loadMoves(piece, i, j, color, board) {
     let id = toID2(i, j);
@@ -49,7 +90,7 @@ function loadMoves(piece, i, j, color, board) {
         return board.moveCache[id][1];
     } else {
         // Cache miss, generate the moves from scratch
-        let moves = getMovesGenerated(piece, i, j, color, board.grid);
+        let moves = getMovesGenerated(piece, i, j, color, board);
         // Save the moves for next time
         board.moveCache[id] = [state, moves];
         return moves;

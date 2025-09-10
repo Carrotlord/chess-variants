@@ -12,6 +12,11 @@ const FAR_CASTLE = 1 << 22;        // This move is a queenside castle
 const NEAR_CASTLE = 1 << 23;       // This move is a kingside castle
 const PAWN_PROMOTE = 1 << 24;      // This move is a pawn promotion (check MOVING_PIECE for what the promoted piece is)
 const EN_PASSANT = 1 << 25;        // This move is en passant
+const CASTLING_STATE = 0xf << 26;  // 4 bit mask to cache which kinds of castling are still allowed
+const WHITE_NEAR_CASTLE = 1 << 26; // Near castle is available for white
+const WHITE_FAR_CASTLE = 1 << 27;  // Far castle is available for white
+const BLACK_NEAR_CASTLE = 1 << 28; // Near castle is available for black
+const BLACK_FAR_CASTLE = 1 << 29;  // Far castle is available for black
 const SHIFT_AMOUNT = {
     [MOVING_PIECE]: 0, [CAPTURED_PIECE]: 5, [START_POSITION]: 10,
     [END_POSITION]: 16, [FAR_CASTLE]: 22, [NEAR_CASTLE]: 23,
@@ -51,20 +56,24 @@ const PIECE_SYMBOLS = {
 };
 const NO_SELECTION = -1;
 
-function getMovesGenerated(piece, i, j, color, grid) {
+function getMovesGenerated(piece, i, j, color, board) {
     switch (piece & KIND) {
         case KING:
-            return filterMoveOntoOwnColor(COMPUTED_KING_MOVES[toID2(i, j)], color, grid).map(toID);
+            return filterMoveOntoOwnColor(
+                COMPUTED_KING_MOVES[toID2(i, j)], color, board.grid
+            ).map(toID).concat(
+                board.getCastlingMoves(color)
+            );
         case QUEEN:
-            return getQueenMoves(i, j, grid).map(toID);
+            return getQueenMoves(i, j, board.grid).map(toID);
         case ROOK:
-            return getRookMoves(i, j, grid).map(toID);
+            return getRookMoves(i, j, board.grid).map(toID);
         case BISHOP:
-            return getBishopMoves(i, j, grid).map(toID);
+            return getBishopMoves(i, j, board.grid).map(toID);
         case KNIGHT:
-            return filterMoveOntoOwnColor(COMPUTED_KNIGHT_MOVES[toID2(i, j)], color, grid).map(toID);
+            return filterMoveOntoOwnColor(COMPUTED_KNIGHT_MOVES[toID2(i, j)], color, board.grid).map(toID);
         case PAWN:
-            return getPawnMoves(i, j, grid).map(toID);
+            return getPawnMoves(i, j, board.grid).map(toID);
     }
     return [];
 }
@@ -120,6 +129,10 @@ class Board {
         this.checkingPieceForBlackIsValid = true;
         this.whiteKingCheckVision = this.checkVision(WHITE);
         this.blackKingCheckVision = this.checkVision(BLACK);
+        this.whiteKingCanCastleNear = true;
+        this.whiteKingCanCastleFar = true;
+        this.blackKingCanCastleNear = true;
+        this.blackKingCanCastleFar = true;
     }
 
     checkVision(kingColor) {
@@ -191,6 +204,85 @@ class Board {
                 this.nextMoves.push(move);
             }
         }
+    }
+    
+    isKingInCheck(kingColor) {
+        if (kingColor === BLACK) {
+            if (this.checkingPieceForBlackIsValid) {
+                this.diagnostics.blackCacheHit++;
+                // Is there some piece causing check?
+                return this.blackKingCheckingPieceCoords !== null;
+            }
+        } else if (this.checkingPieceForWhiteIsValid) {
+            this.diagnostics.whiteCacheHit++;
+            // Is there some piece causing check?
+            return this.whiteKingCheckingPieceCoords !== null;
+        }
+        // The cache is not valid, so use the slower method:
+        return detectKingInCheck(this, kingColor) !== null;
+    }
+    
+    getCastlingMoves(kingColor) {
+        if (this.isKingInCheck(kingColor)) {
+            // We can't castle if we're in check
+            return [];
+        }
+        if (kingColor === WHITE) {
+            if (this.whiteKingCanCastleNear && this.verifyCastling(WHITE_NEAR_CASTLE_OBJ)) {
+                if (this.whiteKingCanCastleFar && this.verifyCastling(WHITE_FAR_CASTLE_OBJ)) {
+                    return WHITE_BOTH_CASTLE_COORDS;
+                }
+                return WHITE_NEAR_CASTLE_COORDS;
+            } else if (this.whiteKingCanCastleFar && this.verifyCastling(WHITE_FAR_CASTLE_OBJ)) {
+                return WHITE_FAR_CASTLE_COORDS;
+            }
+        } else {
+            if (this.blackKingCanCastleNear && this.verifyCastling(BLACK_NEAR_CASTLE_OBJ)) {
+                if (this.blackKingCanCastleFar && this.verifyCastling(BLACK_FAR_CASTLE_OBJ)) {
+                    return BLACK_BOTH_CASTLE_COORDS;
+                }
+                return BLACK_NEAR_CASTLE_COORDS;
+            } else if (this.blackKingCanCastleFar && this.verifyCastling(BLACK_FAR_CASTLE_OBJ)) {
+                return BLACK_FAR_CASTLE_COORDS;
+            }
+        }
+        return [];
+    }
+    
+    verifyCastling(castlingObj) {
+        // Just because castling is available, it does not
+        // mean we can actually castle on the current turn
+        // due to pieces being in the way or the king being
+        // in check, moving into check, or moving through check
+        const {kingColor, kingVerifyArray, rookVerify} = castlingObj;
+        if (rookVerify !== -1) {
+            const [i, j] = toCoords(rookVerify);
+            if (this.grid[i][j] !== EMPTY) {
+                // Something is blocking the rook, so we can't castle
+                return false;
+            }
+        }
+        const kingPosition = kingColor === WHITE ? this.cachedWhiteKingPositionID : this.cachedBlackKingPositionID;
+        
+        // Are these squares empty?
+        for (const move of kingVerifyArray) {
+            const [i, j] = toCoords(move);
+            if (this.grid[i][j] !== EMPTY) {
+                // Something is blocking the king, so we can't castle
+                return false;
+            }
+        }
+        
+        // Since checking for checks takes a long time,
+        // do this loop after we confirmed the squares are empty:
+        for (const move of kingVerifyArray) {
+            if (isKingInCheckAfterMove(this, kingPosition, move, kingColor)) {
+                // We can't castle into check or through check
+                return false;
+            }
+        }
+        // Castling is ok:
+        return true;
     }
 
     encodeMove(piece, captured, start, end, farCastle, nearCastle, promote, enPassant) {
