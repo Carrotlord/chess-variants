@@ -81,6 +81,7 @@ function getMovesGenerated(piece, i, j, color, board) {
 class Board {
     constructor(graphicalBoard) {
         this.graphicalBoard = graphicalBoard;
+        this.showCoordinates = false;
         this.resetData();
     }
 
@@ -95,7 +96,6 @@ class Board {
             [WHITE_PAWN, WHITE_PAWN,   WHITE_PAWN,   WHITE_PAWN,  WHITE_PAWN, WHITE_PAWN,   WHITE_PAWN,   WHITE_PAWN],
             [WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK]
         ];
-        this.showCoordinates = false;
         this.colors = {};
         this.nextMoves = [];     // Valid moves
         this.invalidMoves = [];  // Moves that would put the king in check
